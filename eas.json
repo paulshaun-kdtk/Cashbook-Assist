@@ -1,0 +1,33 @@
+{
+  "cli": {
+    "version": ">= 16.17.3",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "autoIncrement": true
+    },
+    "realdevice-ios": {
+      "distribution": "internal",
+      "developmentClient": false,
+      "autoIncrement": true
+    },
+    "realdevice-android": {
+      "distribution": "internal",
+      "developmentClient": false,
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {},
+    "realdevice-ios": {},
+    "realdevice-android": {}
+  }
+}
