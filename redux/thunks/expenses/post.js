@@ -3,13 +3,13 @@ import { ID } from "react-native-appwrite";
 import { database } from "../../appwrite/config";
 import { appwriteCreds } from "../../appwrite/credentials";
 
-export const createCashbookThunk = createAsyncThunk(
-  "cashbook/create_entry",
+export const createExpenseThunk = createAsyncThunk(
+  "cashbook/expense/create_entry",
   async ({ data }, { rejectWithValue }) => {
     try {
       const response = await database.createDocument(
         appwriteCreds.databaseId,
-        appwriteCreds.cashbook_collection_id, // collection ID
+        appwriteCreds.expense_collection_id, // collection ID
         ID.unique(), // unique ID
         data,
       );
@@ -21,13 +21,13 @@ export const createCashbookThunk = createAsyncThunk(
   },
 );
 
-export const deleteCashbookThunk = createAsyncThunk(
-  "cashbook/delete_entry",
+export const deleteExpenseThunk = createAsyncThunk(
+  "cashbook/expense/delete_entry",
   async ({ documentId }, { rejectWithValue }) => {
     try {
       const response = await database.deleteDocument(
         appwriteCreds.databaseId, // database ID
-        appwriteCreds.cashbook_collection_id, // collection ID
+        appwriteCreds.expense_collection_id, // collection ID
         documentId, // document ID
       );
       return response;

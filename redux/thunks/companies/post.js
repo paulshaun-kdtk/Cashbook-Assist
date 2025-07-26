@@ -1,5 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { database, dbID } from "../../appwrite/config";
+import { ID } from "react-native-appwrite";
+import { database } from "../../appwrite/config";
 import { appwriteCreds } from "../../appwrite/credentials";
 
 
@@ -10,7 +11,7 @@ export const createCompanyThunk = createAsyncThunk(
       const response = await database.createDocument(
         appwriteCreds.databaseId,
         appwriteCreds.company_collection_id, // collection ID
-        dbID.unique(), // unique ID
+        ID.unique(), // unique ID
         data,
       );
       return response;

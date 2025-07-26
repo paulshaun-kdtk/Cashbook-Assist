@@ -15,5 +15,5 @@
     "expo-env.d.ts",
     "metro.config.js",
     "nativewind-env.d.ts"
-, "redux/slices/companies/companySlice.js"  ]
+, "redux/slices/companies/companySlice.js", "redux/slices/expenses/expensesSlice.js"  ]
 }
