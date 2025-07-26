@@ -1,0 +1,38 @@
+import { createAsyncThunk } from "@reduxjs/toolkit";
+import { database, dbID } from "../../appwrite/config";
+import { appwriteCreds } from "../../appwrite/credentials";
+
+export const createCashbookThunk = createAsyncThunk(
+  "cashbook/create_entry",
+  async ({ data }, { rejectWithValue }) => {
+    try {
+      const response = await database.createDocument(
+        appwriteCreds.databaseId,
+        appwriteCreds.cashbook_collection_id, // collection ID
+        dbID.unique(), // unique ID
+        data,
+      );
+      return response;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      return rejectWithValue(errorMessage);
+    }
+  },
+);
+
+export const deleteCashbookThunk = createAsyncThunk(
+  "cashbook/delete_entry",
+  async ({ documentId }, { rejectWithValue }) => {
+    try {
+      const response = await database.deleteDocument(
+        appwriteCreds.databaseId, // database ID
+        appwriteCreds.cashbook_collection_id, // collection ID
+        documentId, // document ID
+      );
+      return response;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      return rejectWithValue(errorMessage);
+    }
+  }
+);

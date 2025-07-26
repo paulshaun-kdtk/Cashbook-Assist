@@ -1,22 +1,24 @@
+import store from '@/redux/store';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import Toast from "react-native-toast-message";
+import { Provider, useDispatch } from "react-redux";
 import "../global.css";
- 
+
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { initAuth } from '@/redux/thunks/auth/authThunk';
+import { useEffect } from 'react';
 
-export default function RootLayout() {
+function AppLayout() {
   const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+  const dispatch = useDispatch();
 
-  if (!loaded) {
-    // Async font loading only occurs in development.
-    return null;
-  }
+  useEffect(() => {
+    dispatch(initAuth());
+  }, []);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -26,6 +28,21 @@ export default function RootLayout() {
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />
+      <Toast />
     </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  const [loaded] = useFonts({
+    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+  });
+
+  if (!loaded) return null;
+
+  return (
+    <Provider store={store}>
+      <AppLayout />
+    </Provider>
   );
 }

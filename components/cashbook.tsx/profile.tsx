@@ -34,7 +34,7 @@ export default function ProfileScreen() {
         <View className="mx-4 rounded-xl overflow-hidden">
           {/* Edit Profile */}
           <TouchableOpacity 
-          onPress={() => router.push('/auth/signin')}
+          onPress={() => router.push('/profile/edit')}
           className="flex-row items-center justify-between py-3 px-4 bg-gray-100 mb-8 dark:bg-[#1A1E4A] border-b border-gray-200 dark:border-[#2C2F5D]">
             <View className="flex-row items-center">
               <MaterialCommunityIcons name="pencil-outline" size={24} color={theme === 'dark' ? 'white' : '#6B7280'} className="mr-3" />

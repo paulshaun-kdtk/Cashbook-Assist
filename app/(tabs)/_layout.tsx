@@ -1,8 +1,20 @@
 import CustomTabBar from '@/components/ui/tabBar';
-import { Tabs } from 'expo-router';
+import { useAuthUser } from '@/hooks/useAuth';
+import { Redirect, Tabs } from 'expo-router';
 import React from 'react';
+import Toast from 'react-native-toast-message';
 
 export default function TabLayout() {
+  const {user} = useAuthUser();
+
+  if (!user) {
+    Toast.show({
+      type: "error",
+      text1: "Auth required",
+      text2: "You need to authenticate to access this page"
+    })
+    return <Redirect href={'/auth/signin'} />;
+  }
 
   return (
     <Tabs
