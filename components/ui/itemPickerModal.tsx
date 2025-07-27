@@ -30,7 +30,7 @@ export default function ItemPickerModal({
 
   const filteredItems = items.filter((item) => {
     const itemName = is_currency ? item.currency : item.name;
-    return itemName.toLowerCase().includes(searchQuery.toLowerCase());
+    return itemName && itemName.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
 
@@ -63,8 +63,8 @@ export default function ItemPickerModal({
       {/* Item List */}
       <FlatList
         data={filteredItems}
-        keyExtractor={(item) => {
-          return is_currency ? item.number : item.id.toString();
+        keyExtractor={(item, index) => {
+          return is_currency ? item.number : index.toString();
         }}
         renderItem={({ item }) => (
           <TouchableOpacity

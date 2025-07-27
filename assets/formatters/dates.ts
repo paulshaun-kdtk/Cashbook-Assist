@@ -36,12 +36,17 @@ export const formatDate = (date) => {
 };
 
 export const formatDateShort = (date) => {
-    try {
-        return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
-    } catch (error) {
-        return date;
-    }
-}
+  try {
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
+    const year = d.getFullYear();
+    return `${day}-${month}-${year}`;
+  } catch (error) {
+    return date;
+  }
+};
+
 
 export const formatDateShortWords = (date) => {
     try {

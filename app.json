@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "cashbook-assist",
+    "name": "Cashbook Assist - Manage your day to day cashflows",
     "slug": "cashbook-assist",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/appIcon.png",
     "scheme": "cashbookassist",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,

@@ -1,43 +1,85 @@
 import { useStoredUsername } from '@/hooks/useStoredUsername';
 import { useToast } from '@/hooks/useToast';
+import { RootState } from '@/redux/store';
+import { fetchCategoriesThunk } from '@/redux/thunks/categories/fetch';
 import { createExpenseThunk } from '@/redux/thunks/expenses/post';
 import { createIncomeThunk } from '@/redux/thunks/income/post';
+import { Category } from '@/types/category';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { ScrollView, Text, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native';
-import { useDispatch } from 'react-redux';
+import DatePicker from 'react-native-date-picker';
+import { Modalize } from 'react-native-modalize';
+import { useDispatch, useSelector } from 'react-redux';
 import { ThemedText } from '../ThemedText';
+import ItemPickerModal from '../ui/itemPickerModal';
+import AddCategoryForm from './addCategory';
 
 export default function AddTransactionForm({onFormSubmit=null}) {
   const theme = useColorScheme(); // 'light' or 'dark'
   const which_cashbook = useLocalSearchParams().id;
   const {username} = useStoredUsername()
+  const [date, setDate] = React.useState(new Date());
+  const [datePickerOpen, setShowDatePicker] = React.useState(false);
+  const { categories, loading, error } = useSelector((state: RootState) => state.categories);
+  const [showCategoryPicker, setShowCategoryPicker] = React.useState(false);
+  const [category, setCategory] = React.useState('');
   const dispatch = useDispatch()
   const toast = useToast()
 
+  React.useEffect(() => {
+    if (username) {
+      dispatch(fetchCategoriesThunk(username));
+    }
+  }, [dispatch, username]);
+
+  const defaultCategories = [
+    {name: 'Personal', description: 'For personal expenses'},
+    {name: 'Business', description: 'For business expenses'},
+    {name: 'Travel', description: 'For travel expenses'},
+    {name: 'Shopping', description: 'For shopping expenses'},
+    {name: 'Health', description: 'For health expenses'},
+    {name: 'Food', description: 'For food expenses'},
+  ]
+
+  const allCategories = [...(categories || []), ...defaultCategories];
+
+
   const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm({
     defaultValues: {
-      date: '',
       description: '',
       memo: '',
       amount: '', 
       type: 'expense',
-      category: '',
     }
   });
 
   const transactionType = watch('type');
 
+  const modalizeRef = React.useRef<Modalize>(null);
+
+  const handleAddCashbook = () => {
+    modalizeRef.current?.open();
+  };
+
+    const  handleCloseModal = () => {
+        modalizeRef.current?.close();
+        if (username) {
+          dispatch(fetchCategoriesThunk(username));
+        }
+      }
+  
+
   const onSubmit = async data => {
     const transactionData = {
       description: data.description,
-      category: data.category,
+      category: category,
       memo: data.memo,
       amount: parseFloat(data.amount), 
       which_cashbook: which_cashbook,
       which_key: username,
-      createdAt: new Date(data.date).toISOString(),
+      createdAt: new Date(date).toISOString(),
     };
     try {
       const success = data.type === 'income' ? await dispatch(createIncomeThunk({data: transactionData})).unwrap() : await dispatch(createExpenseThunk({data: transactionData})).unwrap()
@@ -45,7 +87,8 @@ export default function AddTransactionForm({onFormSubmit=null}) {
             toast.showToast({ type: 'success', text1: 'Transaction added successfully!' });
         }
     }  catch (error) {
-        toast.showToast({ type: 'error', text1: error?.message || 'Company creation failed, please try again.' });
+        console.log(error)
+        toast.showToast({ type: 'error', text1: error?.message || 'Transaction creation failed, please try again.' });
     }
     onFormSubmit && onFormSubmit()
   };
@@ -56,7 +99,7 @@ export default function AddTransactionForm({onFormSubmit=null}) {
         <ThemedText type='subtitle' className="text-xl font-bold">Add New Transaction</ThemedText>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 350 }}>
         <View className="mx-4 rounded-xl overflow-hidden bg-gray-100 dark:bg-[#1A1E4A] shadow-lg p-4">
 
           {/* Type Selector (Income/Expense) */}
@@ -78,33 +121,18 @@ export default function AddTransactionForm({onFormSubmit=null}) {
 
           {/* Date Input */}
           <ThemedText className="text-sm text-gray-500 dark:text-gray-400 mb-2">Date</ThemedText>
-          <Controller
-            control={control}
-            rules={{ required: true }}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                className="w-full p-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#0B0D2A] text-black dark:text-white mb-2"
-                placeholder="e.g., YYYY-MM-DD"
-                placeholderTextColor={theme === 'dark' ? '#9CA3AF' : '#6B7280'}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-                keyboardType="numbers-and-punctuation" // For date format
-              />
-            )}
-            name="date"
-          />
-          {errors.date && (
-            <Text className="text-red-500 text-xs mb-4">
-              {errors.date.type === 'required' && 'Date is required.'}
-            </Text>
-          )}
+          <TouchableOpacity
+            onPress={() => setShowDatePicker(true)}
+            className="w-full p-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#0B0D2A] text-black dark:text-white mb-2"  
+          > 
+            <Text className="text-base font-bold dark:text-white">{date.toDateString()}</Text>
+          </TouchableOpacity>
 
           {/* Description Input */}
           <ThemedText className="text-sm text-gray-500 dark:text-gray-400 mb-2">Description</ThemedText>
           <Controller
             control={control}
-            rules={{ required: true, minLength: 5 }}
+            rules={{ required: true }}
             render={({ field: { onChange, onBlur, value } }) => (
               <TextInput
                 className="w-full p-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#0B0D2A] text-black dark:text-white mb-2"
@@ -121,7 +149,6 @@ export default function AddTransactionForm({onFormSubmit=null}) {
           {errors.description && (
             <Text className="text-red-500 text-xs mb-4">
               {errors.description.type === 'required' && 'Description is required.'}
-              {errors.description.type === 'minLength' && 'Description must be at least 5 characters.'}
             </Text>
           )}
 
@@ -160,6 +187,7 @@ export default function AddTransactionForm({onFormSubmit=null}) {
             )}
             name="amount"
           />
+
           {errors.amount && (
             <Text className="text-red-500 text-xs mb-4">
               {errors.amount.type === 'required' && 'Amount is required.'}
@@ -169,29 +197,14 @@ export default function AddTransactionForm({onFormSubmit=null}) {
 
           {/* Category Input */}
           <ThemedText className="text-sm text-gray-500 dark:text-gray-400 mb-2">Category</ThemedText>
-          <Controller
-            control={control}
-            rules={{ required: true, minLength: 3 }}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                className="w-full p-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#0B0D2A] text-black dark:text-white mb-2"
-                placeholder="e.g., Utilities, Salary, Travel"
-                placeholderTextColor={theme === 'dark' ? '#9CA3AF' : '#6B7280'}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-                autoCapitalize="words"
-              />
-            )}
-            name="category"
-          />
-          {errors.category && (
-            <Text className="text-red-500 text-xs mb-4">
-              {errors.category.type === 'required' && 'Category is required.'}
-              {errors.category.type === 'minLength' && 'Category must be at least 3 characters.'}
-            </Text>
-          )}
 
+          <TouchableOpacity className='bg-transparent p-4 rounded-lg border border-gray-300 dark:border-gray-700 text-black dark:text-white mb-2' onPress={() => setShowCategoryPicker(true)}>
+            <Text className='text-base font-bold dark:text-cyan-500'>{category || 'Select a category'}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity className='bg-transparent p-2' onPress={handleAddCashbook} activeOpacity={0.5} hitSlop={10}>
+            <Text className='text-base font-bold dark:text-cyan-500'>Add new category</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
             className="w-full p-4 rounded-xl bg-cyan-600 dark:bg-cyan-500 items-center justify-center shadow-md mt-4"
@@ -201,6 +214,32 @@ export default function AddTransactionForm({onFormSubmit=null}) {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <Modalize rootStyle={{ backgroundColor: 'transparent' }} modalStyle={{ backgroundColor: 'transparent' }} ref={modalizeRef}><AddCategoryForm onFormSubmit={handleCloseModal} /></Modalize>
+      
+      <DatePicker
+        modal
+        open={datePickerOpen}
+        date={date}
+        mode='date'
+        onConfirm={(date) => {
+          setShowDatePicker(false)
+          setDate(date)
+        }}
+        onCancel={() => {
+          setShowDatePicker(false)
+        }}
+      />
+
+          <ItemPickerModal
+                  items={allCategories}
+                  visible={showCategoryPicker}
+                  onClose={() => setShowCategoryPicker(false)}
+                  onSelectItem={(item: Category) => {
+                  setCategory(item.name);
+                  setShowCategoryPicker(false);
+                  }}
+              />
     </View>
   );
 }

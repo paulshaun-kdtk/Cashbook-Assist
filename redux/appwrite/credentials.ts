@@ -8,10 +8,7 @@ export const appwriteCreds = {
     category_collection_id: '6883676f0002f986a763',
     user_collection_id: '6884ad23001e40d6e7e0',
     subscription_collection_id: '6884ab27000152eee35e',
-    projectId : "",
-    databaseId : "", 
-    // projectId : process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID,
-    // databaseId : process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID, 
-    apiKey : '',  
-    // apiKey : process.env.EXPO_PUBLIC_APPWRITE_API_KEY,  
+    projectId : process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID,
+    databaseId : process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID, 
+    apiKey : process.env.EXPO_PUBLIC_APPWRITE_API_KEY,  
 }

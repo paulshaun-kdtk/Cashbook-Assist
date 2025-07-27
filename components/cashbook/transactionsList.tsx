@@ -3,18 +3,20 @@ import { formatDateShort } from '@/assets/formatters/dates';
 import { useStoredUsername } from '@/hooks/useStoredUsername';
 import { fetchCashbooksThunk } from '@/redux/thunks/cashbooks/fetch';
 import { fetchExpensesThunk } from '@/redux/thunks/expenses/fetch';
+import { deleteExpenseThunk } from '@/redux/thunks/expenses/post';
 import { fetchIncomeThunk } from '@/redux/thunks/income/fetch';
+import { deleteIncomeThunk } from '@/redux/thunks/income/post';
 import { Cashbook } from '@/types/cashbook';
 import { Transaction } from '@/types/transaction';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { Modalize } from 'react-native-modalize';
 import { useDispatch, useSelector } from 'react-redux';
-import { ThemedText } from '../ThemedText';
 import AddTransactionForm from '../forms/addTransaction';
-import Loader from '../ui/loading';
+import { ThemedText } from '../ThemedText';
 
 export default function TransactionsListScreen() {
   const theme = useColorScheme(); // 'light' or 'dark'
@@ -46,7 +48,8 @@ export default function TransactionsListScreen() {
     }
   }, [cashbooks, cashbookId, whichCashbook]);
 
-  const rawTransactions = [
+  const rawTransactions = useMemo(() => {
+    return [
     ...income
       .filter((item: Transaction) => !cashbookId || item.which_cashbook === cashbookId)
       .map((item: Transaction) => ({
@@ -81,32 +84,58 @@ export default function TransactionsListScreen() {
         category: item.category || 'Other',
       })),
   ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // Sort by date
+  }, [cashbookId, expenses, income]);
+  
+  const transactions = useMemo(() => {
+    let runningBalance = 0;
+    return rawTransactions.map((item) => {
+      runningBalance += item.amount;
+      return {
+        ...item,
+        balance: runningBalance,
+        id: item.$id,
+      };
+    });
+  }, [rawTransactions]);
 
-  // Calculate running balance
-  let runningBalance = 0;
-  const transactions = rawTransactions.map((item) => {
-    runningBalance += item.amount;
-    return {
-      ...item,
-      balance: runningBalance,
-      id: item.$id, // Use $id for uniqueness if $sequence isn't guaranteed unique across types
-    };
-  });
+  const currentBalance = transactions.at(-1)?.balance ?? 0;
 
-  const currentBalance = transactions.length > 0 ? transactions[transactions.length - 1].balance : 0;
-
-  const handleAddTransaction = () => {
+  const handleAddTransaction = useCallback(() => {
     modalizeRef.current?.open();
-  };
+  }, []);
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     modalizeRef.current?.close();
-    // Re-fetch data to update the transaction list after adding a new one
     if (username) {
       dispatch(fetchIncomeThunk(username));
       dispatch(fetchExpensesThunk(username));
     }
-  };
+  }, [dispatch, username]);
+
+  const handleTransactionDeletion = (documentId: string, transactionType) => {
+    if (!username) return
+    if (transactionType === 'income') {
+      dispatch(deleteIncomeThunk({documentId})).then(() => {
+        dispatch(fetchIncomeThunk(username));
+      });
+    } else {
+      dispatch(deleteExpenseThunk({documentId})).then(() => {
+        dispatch(fetchExpensesThunk(username));
+      });
+    }
+  }
+      const renderRightActions = (documentId: string, transactionType: string) => (
+      <TouchableOpacity
+        onPress={() => {
+          handleTransactionDeletion(documentId, transactionType);  
+        }}
+        className="bg-red-600 justify-center items-center w-20 h-full"
+      >
+        <MaterialIcons name="delete" size={24} color="white" />
+      </TouchableOpacity>
+    );
+  
+
 
   return (
     <View className="flex-1 bg-white dark:bg-[#0B0D2A] pt-12">
@@ -117,8 +146,6 @@ export default function TransactionsListScreen() {
         </ThemedText>
       </View>
 
-      {/* Loading and Error Indicators */}
-      {(IncomeLoading || ExpensesLoading) && <Loader />}
       {IncomeError && (
         <Text className="text-red-500 text-center mx-2">Income Error: {IncomeError}</Text>
       )}
@@ -161,25 +188,29 @@ export default function TransactionsListScreen() {
             </View>
           ) : (
             transactions.map((transaction, index) => (
+                            <View key={transaction.$id}>
+                                <Swipeable
+                                  renderRightActions={() => renderRightActions(transaction.$id, transaction.type)}
+                                >
+
               <TouchableOpacity
-                key={transaction.id}
                 className={`flex-row items-center py-3 px-4 ${
                   index < transactions.length - 1
-                    ? 'border-b border-gray-200 dark:border-[#2C2F5D]'
-                    : ''
+                  ? 'border-b border-gray-200 dark:border-[#2C2F5D]'
+                  : ''
                 }`}
               >
                 {/* Icon for transaction type */}
                 <Ionicons
                   name={
                     transaction.type === 'income'
-                      ? 'arrow-up-circle-outline'
-                      : 'arrow-down-circle-outline'
+                    ? 'arrow-up-circle-outline'
+                    : 'arrow-down-circle-outline'
                   }
                   size={28}
                   color={
                     transaction.type === 'income'
-                      ? theme === 'dark'
+                    ? theme === 'dark'
                         ? '#4ADE80'
                         : '#22C55E' // Green for income
                       : theme === 'dark'
@@ -189,28 +220,31 @@ export default function TransactionsListScreen() {
                   className="mr-4"
                 />
                 <View className="flex-1">
-                  <ThemedText className="text-base font-semibold">
+                  <Text className="text-base dark:text-white font-semibold">
                     {transaction.description}
-                  </ThemedText>
-                  <ThemedText className="text-sm text-gray-500 dark:text-gray-400">
+                  </Text>
+                  <Text className='text-xs text-gray-700 dark:text-white'>{transaction.category}</Text>
+                  <Text className="text-sm text-gray-500 dark:text-gray-400">
                     {formatDateShort(transaction.date)}
-                  </ThemedText>
+                  </Text>
                 </View>
                 <View className="items-end">
                   <ThemedText
                     className={`text-base font-bold ${
                       transaction.type === 'income'
-                        ? 'text-green-600 dark:text-green-400'
-                        : 'text-red-600 dark:text-red-400'
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-red-600 dark:text-red-400'
                     }`}
-                  >
+                    >
                     {formatCurrency(transaction.amount)}
                   </ThemedText>
-                  <ThemedText className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <Text className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                     Balance: {formatCurrency(transaction.balance)}
-                  </ThemedText>
+                  </Text>
                 </View>
               </TouchableOpacity>
+                    </Swipeable>
+                </View>
             ))
           )}
         </View>

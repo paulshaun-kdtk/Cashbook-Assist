@@ -1,4 +1,4 @@
-import CashbooksListScreen from '@/components/cashbook.tsx/cashbookList';
+import CashbooksListScreen from '@/components/cashbook/cashbookList';
 
 export default function CashbookScreen() {
   return (

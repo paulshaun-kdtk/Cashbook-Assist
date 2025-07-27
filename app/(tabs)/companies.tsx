@@ -1,4 +1,4 @@
-import CompanyListScreen from '@/components/cashbook.tsx/companyList';
+import CompanyListScreen from '@/components/cashbook/companyList';
 
 export default function CompaniesScreen() {
   return (

@@ -1,5 +1,6 @@
 import { formatCurrency } from '@/assets/formatters/currency';
 import { useStoredUsername } from '@/hooks/useStoredUsername';
+import { useToast } from '@/hooks/useToast';
 import { selectCashbookBalances } from '@/redux/slices/cashbooks/selectCashbookTotals';
 import { RootState } from '@/redux/store';
 import { fetchCashbooksThunk } from '@/redux/thunks/cashbooks/fetch';
@@ -26,7 +27,7 @@ export default function CompanyListPage() {
   const { username } = useStoredUsername();
   const modalizeRef = useRef<Modalize>(null);
   const balances = useSelector(selectCashbookBalances)
-
+  const toast = useToast()
   const { companies, loading: companiesLoading, error: companiesError } = useSelector(
     (state: RootState) => state.companies
   );
@@ -58,12 +59,28 @@ export default function CompanyListPage() {
     dispatch(fetchCompaniesThunk(username));
   }
 
+  const companyBalance = (cashbooks: Cashbook[]) => {
+    return cashbooks.reduce((total, cashbook) => total + balances[cashbook.$id] || 0, 0);
+  };
+
+  const handleDeleteCompany = (companyId: string) => {
+    if (!username) return
+    if (cashbooks.length){
+      toast.showToast({
+        type: 'error',
+        text1: 'Deletion Restricted',
+        text2: 'This company has cashbooks please delete them first'
+      })
+      return
+    } 
+    dispatch(deleteCompanyThunk({documentId: companyId})).then(() => {
+      dispatch(fetchCompaniesThunk(username));
+    });
+  }
   const renderRightActions = (companyId: string) => (
     <TouchableOpacity
       onPress={() => {
-        dispatch(deleteCompanyThunk({documentId: companyId})).then(() => {
-          dispatch(fetchCompaniesThunk(username));
-        });
+      handleDeleteCompany(companyId);  
       }}
       className="bg-red-600 justify-center items-center w-20 h-full"
     >
@@ -105,10 +122,8 @@ export default function CompanyListPage() {
                       
                       <View className="items-end">
                         <ThemedText className="text-sm text-gray-500 dark:text-gray-400">Balance</ThemedText>
-                        <Text className={`text-base font-bold ${companyCashbooks.reduce((sum, cb) => sum + (balances[cb.$id] || 0), 0) < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'} mt-1`}>
-                          {formatCurrency(
-                            companyCashbooks.reduce((sum, cb) => sum + (balances[cb.$id] || 0), 0)
-                          )}
+                        <Text className={`text-base font-bold ${companyBalance(companyCashbooks) < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'} mt-1`}>
+                          {formatCurrency(companyBalance(companyCashbooks))}
                         </Text>
                       </View>
 

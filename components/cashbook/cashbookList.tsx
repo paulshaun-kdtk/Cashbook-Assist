@@ -1,6 +1,7 @@
 import { formatCurrency } from '@/assets/formatters/currency';
 import { formatDateShortWords } from '@/assets/formatters/dates';
 import { useStoredUsername } from '@/hooks/useStoredUsername';
+import { useToast } from '@/hooks/useToast';
 import { selectCashbookBalances } from '@/redux/slices/cashbooks/selectCashbookTotals';
 import { RootState } from '@/redux/store';
 import { fetchCashbooksThunk } from '@/redux/thunks/cashbooks/fetch';
@@ -23,6 +24,7 @@ import Loader from '../ui/loading';
 export default function CashbooksListScreen() {
   const theme = useColorScheme(); // 'light' or 'dark'
   const router = useRouter()
+  const toast = useToast()
   const dispatch = useDispatch()
   const {username} = useStoredUsername()
   const { cashbooks, loading:CashbooksLoading, error } = useSelector((state: RootState) => state.cashbooks);
@@ -50,12 +52,25 @@ export default function CashbooksListScreen() {
     }
   }, [dispatch, whichCompany, companies, username, companyId]);
 
+  const handleCashbookDeletion = (cashBookId: string) => {
+    if (!username) return
+    if (balances[cashBookId]) {
+      toast.showToast({
+        type: 'error',
+        text1: 'Deletion Restricted',
+        text2: 'This cashbook has transactions please delete them first'
+      })
+      return
+    }
+    dispatch(deleteCashbookThunk({documentId: cashBookId})).then(() => {
+      dispatch(fetchCashbooksThunk(username));
+    });
+
+  }
     const renderRightActions = (cashBookId: string) => (
     <TouchableOpacity
       onPress={() => {
-        dispatch(deleteCashbookThunk({documentId: cashBookId})).then(() => {
-          dispatch(fetchCashbooksThunk(username));
-        });
+        handleCashbookDeletion(cashBookId);  
       }}
       className="bg-red-600 justify-center items-center w-20 h-full"
     >

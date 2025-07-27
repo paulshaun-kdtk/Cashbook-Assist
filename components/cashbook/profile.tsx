@@ -1,19 +1,15 @@
+import { RootState } from '@/redux/store';
 import { FontAwesome, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { ScrollView, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
-
-// Placeholder for ThemedText component - assuming it's defined elsewhere or can be simple
-// For this example, we'll define a basic one that adapts based on useColorScheme
-const ThemedText = ({ className = '', children }) => {
-  const theme = useColorScheme();
-  const textColorClass = theme === 'dark' ? 'text-white' : 'text-black';
-  return <Text className={`${className} ${textColorClass}`}>{children}</Text>;
-};
+import { ScrollView, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { useSelector } from 'react-redux';
+import { ThemedText } from '../ThemedText';
 
 export default function ProfileScreen() {
     const router = useRouter()
   const theme = useColorScheme(); // 'light' or 'dark'
+  const { user } = useSelector((state: RootState) => state.auth);
 
   return (
     <View className="flex-1 bg-white dark:bg-[#0B0D2A] pt-12">
@@ -26,8 +22,8 @@ export default function ProfileScreen() {
 
         {/* Profile Info */}
         <View className="items-center mb-8">
-            <ThemedText className="text-lg font-bold mt-4">User Name</ThemedText>
-            <ThemedText className="text-sm text-gray-500 dark:text-gray-400">user@mail.com</ThemedText>
+            <ThemedText className="text-lg font-bold mt-4">{user?.name}</ThemedText>
+            <ThemedText className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</ThemedText>
         </View>
 
         {/* Settings Options */}

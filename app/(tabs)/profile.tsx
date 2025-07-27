@@ -1,4 +1,4 @@
-import ProfileScreen from '@/components/cashbook.tsx/profile';
+import ProfileScreen from '@/components/cashbook/profile';
 
 export default function Dashboard() {
   return (

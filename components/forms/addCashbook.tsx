@@ -119,7 +119,7 @@ export default function AddCashbookForm({onFormSubmit=null}) {
                 </ThemedText>
               </TouchableOpacity>
           <TouchableOpacity
-            className="w-full p-4 rounded-xl bg-green-500 dark:bg-green-600 items-center justify-center shadow-md mt-4"
+            className="w-full p-4 rounded-xl bg-cyan-600 dark:bg-cyan-500 items-center justify-center shadow-md mt-4"
             onPress={handleSubmit(onSubmit)}
           >
             <Text className="text-white text-lg font-bold">Add Cashbook</Text>

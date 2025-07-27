@@ -1,4 +1,4 @@
-import HomeScreen from '@/components/cashbook.tsx/dashboard';
+import HomeScreen from '@/components/cashbook/dashboard';
 
 export default function Dashboard() {
   return (
