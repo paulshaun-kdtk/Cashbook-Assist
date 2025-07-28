@@ -83,6 +83,7 @@ export default function ItemPickerModal({
                 Alert.alert('Apologies', 'This item seems to have no detail action available yet')
               }
             }}
+            
             className={`p-4 ${
               is_stock
                 ? item.quantity <= 5

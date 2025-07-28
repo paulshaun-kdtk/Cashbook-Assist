@@ -2,9 +2,10 @@ import { useStoredUsername } from '@/hooks/useStoredUsername';
 import { useToast } from '@/hooks/useToast';
 import { RootState } from '@/redux/store';
 import { fetchCategoriesThunk } from '@/redux/thunks/categories/fetch';
-import { createExpenseThunk } from '@/redux/thunks/expenses/post';
-import { createIncomeThunk } from '@/redux/thunks/income/post';
+import { updateExpenseItemThunk } from '@/redux/thunks/expenses/update';
+import { updateIncomeItemThunk } from '@/redux/thunks/income/update';
 import { Category } from '@/types/category';
+import { Transaction } from '@/types/transaction';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -16,17 +17,20 @@ import { ThemedText } from '../ThemedText';
 import ItemPickerModal from '../ui/itemPickerModal';
 import AddCategoryForm from './addCategory';
 
-export default function AddTransactionForm({onFormSubmit}: {onFormSubmit?: (() => void) | null}) {
+export default function UpdateTransactionForm({onFormSubmit=null, transactionData = null}: {
+  onFormSubmit?: (() => void) | null;
+  transactionData?: Transaction | null;
+}) {
   const theme = useColorScheme(); // 'light' or 'dark'
   const which_cashbook = useLocalSearchParams().id;
   const {username} = useStoredUsername()
-  const [date, setDate] = React.useState(new Date());
+  const [date, setDate] = React.useState(transactionData ? new Date(transactionData.date || transactionData.createdAt) : new Date());
   const [datePickerOpen, setShowDatePicker] = React.useState(false);
   const { categories } = useSelector((state: RootState) => state.categories);
   const [showCategoryPicker, setShowCategoryPicker] = React.useState(false);
-  const [category, setCategory] = React.useState('');
+  const [category, setCategory] = React.useState(transactionData?.category || '');
   const dispatch = useDispatch()
-  const toast = useToast()
+  const { showToast } = useToast()
 
   React.useEffect(() => {
     if (username) {
@@ -45,13 +49,18 @@ export default function AddTransactionForm({onFormSubmit}: {onFormSubmit?: (() =
 
   const allCategories = [...(categories || []), ...defaultCategories];
 
-
-  const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm({
+  const formattedAmount = Math.abs(parseFloat(transactionData?.amount?.toString() || '0')).toFixed(2);
+  const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<{
+    description: string;
+    memo: string;
+    amount: string;
+    type: 'income' | 'expense';
+  }>({
     defaultValues: {
-      description: '',
-      memo: '',
-      amount: '', 
-      type: 'expense',
+      description: transactionData?.description || '',
+      memo: transactionData?.memo || '',
+      amount: formattedAmount,
+      type: transactionData?.type || 'expense',
     }
   });
 
@@ -69,9 +78,13 @@ export default function AddTransactionForm({onFormSubmit}: {onFormSubmit?: (() =
           dispatch(fetchCategoriesThunk(username));
         }
       }
-  
-  const onSubmit = async data => {
-    const transactionData = {
+
+      const handleCancel = () => {
+        onFormSubmit && onFormSubmit();
+      }
+
+  const onSubmit = async (data: any) => {
+    const transactionPayload = {
       description: data.description,
       category: category,
       memo: data.memo,
@@ -80,14 +93,23 @@ export default function AddTransactionForm({onFormSubmit}: {onFormSubmit?: (() =
       which_key: username,
       createdAt: new Date(date).toISOString(),
     };
+
     try {
-      const success = data.type === 'income' ? await dispatch(createIncomeThunk({data: transactionData})).unwrap() : await dispatch(createExpenseThunk({data: transactionData})).unwrap()
-       if (success) {
-            toast.showToast({ type: 'success', text1: 'Transaction added successfully!' });
-        }
-    }  catch (error) {
-        console.log(error)
-        toast.showToast({ type: 'error', text1: error?.message || 'Transaction creation failed, please try again.' });
+      const success = data.type === 'income' 
+        ? await dispatch(updateIncomeItemThunk({documentId: transactionData?.$id, data: transactionPayload}) as any).unwrap() 
+        : await dispatch(updateExpenseItemThunk({documentId: transactionData?.$id, data: transactionPayload}) as any).unwrap();
+      if (success) {
+        showToast({ 
+          type: 'success', 
+          text1: transactionData ? 'Transaction updated successfully!' : 'Transaction added successfully!' 
+        });
+      }
+    } catch (error: any) {
+      console.log(error)
+      showToast({ 
+        type: 'error', 
+        text1: error?.message || `Transaction ${transactionData ? 'update' : 'creation'} failed, please try again.` 
+      });
     }
     onFormSubmit && onFormSubmit()
   };
@@ -95,7 +117,7 @@ export default function AddTransactionForm({onFormSubmit}: {onFormSubmit?: (() =
   return (
     <View className="flex-1 bg-white dark:bg-[#0B0D2A] pt-12 min-h-screen" style={{ zIndex: 10000, elevation: 1000 }}>
       <View className="px-4 flex-row items-center justify-center relative mb-6">
-        <ThemedText type='subtitle' className="text-xl font-bold">Add New Transaction</ThemedText>
+        <ThemedText type='subtitle' className="text-xl font-bold">{transactionData ? 'Update Transaction' : 'Add New Transaction'}</ThemedText>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 350 }}>
@@ -106,13 +128,13 @@ export default function AddTransactionForm({onFormSubmit}: {onFormSubmit?: (() =
           <View className="flex-row rounded-lg bg-white dark:bg-[#0B0D2A] border border-gray-300 dark:border-gray-700 mb-4 overflow-hidden">
             <TouchableOpacity
               className={`flex-1 items-center py-3 ${transactionType === 'income' ? 'bg-cyan-600 dark:bg-cyan-500' : ''}`}
-              onPress={() => setValue('type', 'income')}
+              onPress={() => setValue('type', 'income' as any)}
             >
               <Text className={`text-base font-bold ${transactionType === 'income' ? 'text-white' : 'text-black dark:text-white'}`}>Income</Text>
             </TouchableOpacity>
             <TouchableOpacity
               className={`flex-1 items-center py-3 ${transactionType === 'expense' ? 'bg-red-500 dark:bg-red-600' : ''}`}
-              onPress={() => setValue('type', 'expense')}
+              onPress={() => setValue('type', 'expense' as any)}
             >
               <Text className={`text-base font-bold ${transactionType === 'expense' ? 'text-white' : 'text-black dark:text-white'}`}>Expense</Text>
             </TouchableOpacity>
@@ -206,15 +228,24 @@ export default function AddTransactionForm({onFormSubmit}: {onFormSubmit?: (() =
           </TouchableOpacity>
 
           <TouchableOpacity
-            className="w-full p-4 rounded-xl bg-cyan-600 dark:bg-cyan-500 items-center justify-center shadow-md mt-4"
+            className="w-full p-4 rounded-xl bg-cyan-600 dark:bg-cyan-500 items-center justify-center shadow-md my-4"
             onPress={handleSubmit(onSubmit)}
           >
-            <Text className="text-white text-lg font-bold">Add Transaction</Text>
+            <Text className="text-white text-lg font-bold">{transactionData ? 'Update Transaction' : 'Add Transaction'}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="w-full p-4 rounded-xl bg-gray-300 dark:bg-gray-700 items-center justify-center shadow-md mt-2"
+            onPress={handleCancel}
+          >
+            <Text className="text-black dark:text-white text-lg font-bold">Cancel</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
 
-      <Modalize rootStyle={{ backgroundColor: 'transparent' }} modalStyle={{ backgroundColor: 'transparent' }} ref={modalizeRef}><AddCategoryForm onFormSubmit={handleCloseModal} /></Modalize>
+      <Modalize rootStyle={{ backgroundColor: 'transparent' }} modalStyle={{ backgroundColor: 'transparent' }} ref={modalizeRef}>
+        <AddCategoryForm onFormSubmit={() => handleCloseModal()} />
+      </Modalize>
       
       <DatePicker
         modal

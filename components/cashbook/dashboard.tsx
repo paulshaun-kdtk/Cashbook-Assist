@@ -1,5 +1,7 @@
 import { formatCurrency } from '@/assets/formatters/currency';
 import { ThemedText } from '@/components/ThemedText';
+import ExportModal from '@/components/ui/exportModal';
+import TransactionFilter from '@/components/ui/transactionFilter';
 import { useStoredUsername } from '@/hooks/useStoredUsername';
 import { selectCashbookBalances } from '@/redux/slices/cashbooks/selectCashbookTotals';
 import { RootState } from '@/redux/store';
@@ -10,7 +12,7 @@ import { fetchIncomeThunk } from '@/redux/thunks/income/fetch';
 import { Transaction } from '@/types/transaction';
 import { Ionicons } from '@expo/vector-icons';
 import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import React from 'react';
 import { ScrollView, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -23,16 +25,25 @@ export default function HomeScreen() {
   const dispatch = useDispatch()
 
     const balances = useSelector(selectCashbookBalances)
-    const { income, loading: incomeLoading, error: incomeError } = useSelector((state: RootState) => state.income);
-    const { expenses, loading: expensesLoading, error: expensesError } = useSelector((state: RootState) => state.expenses);
-    const { companies, loading: companiesLoading, error: companiesError } = useSelector(
+    const { income } = useSelector((state: RootState) => state.income);
+    const { expenses } = useSelector((state: RootState) => state.expenses);
+    const { companies } = useSelector(
       (state: RootState) => state.companies
     );
-    const { cashbooks, loading: cashbooksLoading, error: cashbooksError } = useSelector(
+    const { cashbooks } = useSelector(
       (state: RootState) => state.cashbooks
     );
-  
-    const [expandedCompanyId, setExpandedCompanyId] = React.useState<string | null>(null);
+
+  const [showFilterModal, setShowFilterModal] = React.useState(false);
+  const [showExportModal, setShowExportModal] = React.useState(false);
+  const [filters, setFilters] = React.useState({
+    startDate: "",
+    endDate: "",
+    category: "",
+    type: "",
+    company: "",
+    cashbook: "",
+  });
   
     React.useEffect(() => {
       if (username) {
@@ -50,9 +61,121 @@ export default function HomeScreen() {
     const totalIncome = income.reduce((sum, item: Transaction) => sum + item.amount, 0);
     const totalExpenses = expenses.reduce((sum, item: Transaction) => sum + item.amount, 0);
 
-    const recentTransactions = [...income, ...expenses]
-    .sort((a: Transaction, b: Transaction) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 25); // Show top 5
+    // Filter and normalize transactions based on current filters
+    const rawFilteredTransactions = React.useMemo(() => {
+      // First normalize all transactions with proper amount signs and structure
+      const normalizedTransactions = [
+        ...income.map((item: Transaction) => ({
+          ...item,
+          amount: Math.abs(item.amount), // Ensure income is positive
+          type: 'income' as const,
+          normalizedAmount: Math.abs(item.amount)
+        })),
+        ...expenses.map((item: Transaction) => ({
+          ...item,
+          amount: -Math.abs(item.amount), // Ensure expenses are negative
+          type: 'expense' as const,
+          normalizedAmount: -Math.abs(item.amount)
+        }))
+      ];
+
+      let filtered = normalizedTransactions;
+
+      // Filter by date range
+      if (filters.startDate) {
+        filtered = filtered.filter(item => 
+          new Date(item.createdAt) >= new Date(filters.startDate)
+        );
+      }
+      if (filters.endDate) {
+        filtered = filtered.filter(item => 
+          new Date(item.createdAt) <= new Date(filters.endDate)
+        );
+      }
+
+      // Filter by transaction type
+      if (filters.type) {
+        filtered = filtered.filter(item => item.type === filters.type);
+      }
+
+      // Filter by category
+      if (filters.category) {
+        filtered = filtered.filter(item => 
+          item.category && item.category.toLowerCase().includes(filters.category.toLowerCase())
+        );
+      }
+
+      // Filter by company
+      if (filters.company) {
+        const selectedCompany = companies.find((comp: any) => comp.name === filters.company);
+        if (selectedCompany) {
+          const companyBooks = cashbooks.filter((book: any) => book.which_company === selectedCompany.$id);
+          const companyBookIds = companyBooks.map((book: any) => book.$id);
+          filtered = filtered.filter(item => 
+            companyBookIds.includes(item.which_cashbook)
+          );
+        }
+      }
+
+      // Filter by cashbook
+      if (filters.cashbook) {
+        const selectedCashbook = cashbooks.find((book: any) => book.name === filters.cashbook);
+        if (selectedCashbook) {
+          filtered = filtered.filter(item => 
+            item.which_cashbook === selectedCashbook.$id
+          );
+        }
+      }
+
+      // Sort by date ascending for running balance calculation
+      return filtered.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    }, [income, expenses, filters, companies, cashbooks]);
+
+    // Add running balance to filtered transactions
+    const filteredTransactions = React.useMemo(() => {
+      let runningBalance = 0;
+      return rawFilteredTransactions.map((item) => {
+        runningBalance += item.normalizedAmount;
+        return {
+          ...item,
+          balance: runningBalance,
+          id: item.$id,
+        };
+      });
+    }, [rawFilteredTransactions]);
+
+    // Get recent transactions for display (sorted by date descending)
+    const recentTransactions = React.useMemo(() => {
+      return filteredTransactions
+        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 25); // Show top 25
+    }, [filteredTransactions]);
+
+    const handleFilterApply = (newFilters: typeof filters) => {
+      setFilters(newFilters);
+    };
+
+    // Calculate totals for filtered transactions using normalized amounts
+    const filteredTotalIncome = React.useMemo(() => {
+      return filteredTransactions
+        .filter((t: any) => t.type === 'income')
+        .reduce((sum, item: any) => sum + Math.abs(item.amount), 0);
+    }, [filteredTransactions]);
+
+    const filteredTotalExpenses = React.useMemo(() => {
+      return filteredTransactions
+        .filter((t: any) => t.type === 'expense')
+        .reduce((sum, item: any) => sum + Math.abs(item.amount), 0);
+    }, [filteredTransactions]);
+
+    const filteredNetAmount = React.useMemo(() => {
+      return filteredTotalIncome - filteredTotalExpenses;
+    }, [filteredTotalIncome, filteredTotalExpenses]);
+
+    // Get current balance from filtered transactions
+    const currentFilteredBalance = React.useMemo(() => {
+      return filteredTransactions.length > 0 ? filteredTransactions[filteredTransactions.length - 1].balance : 0;
+    }, [filteredTransactions]);
 
 
   return (
@@ -65,12 +188,12 @@ export default function HomeScreen() {
             <View>
               <ThemedText className="text-xs text-gray-500 dark:text-gray-400">Hello!</ThemedText>
               <ThemedText className="text-black dark:text-green-400 font-bold">
-                {user?.name}
+                {(user as any)?.name}
               </ThemedText>
             </View>
           </View>
         <View className="flex-row items-center gap-5">
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => setShowFilterModal(true)}>
             <SimpleLineIcons name="equalizer" size={24} color={theme === 'dark' ? 'white' : 'black'} />
           </TouchableOpacity>
            
@@ -86,20 +209,20 @@ export default function HomeScreen() {
             <ThemedText className="text-black dark:text-white"> Balance</ThemedText>
             <ThemedText className="text-xs text-gray-500 dark:text-white">All Time</ThemedText>
           </View>
-          <ThemedText className="text-4xl font-bold text-green-500 dark:text-green-400 mt-2">{formatCurrency(totalBalance)}</ThemedText>
+          <ThemedText className="text-4xl font-bold text-green-500 dark:text-green-400 mt-2">{formatCurrency(totalBalance.toString())}</ThemedText>
 
           <View className="flex-row justify-between mt-4 space-x-3">
             <View className="flex-1 rounded-xl p-3 bg-gradient-to-b from-blue-300 to-blue-600 dark:from-[#4C4AFF] dark:to-[#2B2A7C]">
               <ThemedText className="text-sm text-black dark:text-white">Income</ThemedText>
               <Text className="text-lg font-bold text-green-600 dark:text-green-400">
-                {formatCurrency(totalIncome)}
+                {formatCurrency(totalIncome.toString())}
               </Text>
               <Text className="text-xs text-gray-600 dark:text-gray-300">all time</Text>
             </View>
             <View className="flex-1 rounded-xl p-3 bg-gradient-to-b from-red-300 to-red-600 dark:from-[#FF4C4C] dark:to-[#7C2B2B]">
               <ThemedText className="text-sm text-black dark:text-white">Expenses</ThemedText>
               <Text className="text-lg font-bold text-red-600 dark:text-red-400">
-                {formatCurrency(totalExpenses)}
+                {formatCurrency(totalExpenses.toString())}
               </Text>
               <Text className="text-xs text-gray-600 dark:text-gray-300">all time</Text>
             </View>
@@ -108,51 +231,140 @@ export default function HomeScreen() {
 
         {/* Actions */}
         <View className="flex-row justify-around mt-6 px-6">
-          {[
-            { icon: 'add', label: 'Add' },
-            { icon: 'share-outline', label: 'Share' },
-            { icon: 'download-outline', label: 'Export' },
-            { icon: 'card', label: 'Transfer' },
-          ].map(({ icon, label }) => (
-            <View key={label} className='items-center'>
-            <TouchableOpacity className="bg-gray-100 dark:bg-[#1A1E4A] rounded-xl p-4 w-lg">
-              <Ionicons name={icon as any} size={24} color={theme === 'dark' ? 'white' : 'black'} />
-            </TouchableOpacity>
-            <Text className="text-xs text-black dark:text-white mt-1">{label}</Text>
+          {cashbooks.length && (
+            <View className="items-center">
+              <TouchableOpacity
+              className="bg-gray-100 dark:bg-[#1A1E4A] rounded-xl p-4 w-lg"
+              onPress={() => {router.push(`/(companies)/transactions/${(cashbooks[0] as any)?.$id}`)}}>
+              <Ionicons name="add" size={24} color={theme === 'dark' ? 'white' : 'black'} />
+              </TouchableOpacity>
+              <Text className="text-xs text-black dark:text-white mt-1">Add</Text>
             </View>
-          ))}
+            )}
+
+          {/* Share Action */}
+          <View className="items-center">
+            <TouchableOpacity
+              className="bg-gray-100 dark:bg-[#1A1E4A] rounded-xl p-4 w-lg"
+              onPress={() => setShowExportModal(true)}
+            >
+              <Ionicons name="share-outline" size={24} color={theme === 'dark' ? 'white' : 'black'} />
+            </TouchableOpacity>
+            <Text className="text-xs text-black dark:text-white mt-1">Share</Text>
+          </View>
+
+          {/* Export Action */}
+          {/* <View className="items-center">
+            <TouchableOpacity
+              className="bg-gray-100 dark:bg-[#1A1E4A] rounded-xl p-4 w-lg"
+            >
+              <Ionicons name="download-outline" size={24} color={theme === 'dark' ? 'white' : 'black'} />
+            </TouchableOpacity>
+            <Text className="text-xs text-black dark:text-white mt-1">Export</Text>
+          </View> */}
+
+          {/* Transfer Action */}
+          {filteredTransactions.length && (
+            <View className="items-center">
+              <TouchableOpacity
+                className="bg-gray-100 dark:bg-[#1A1E4A] rounded-xl p-4 w-lg"
+                onPress={() => {
+                  router.push(`/transactions/${(cashbooks[0] as any)?.$id}`)
+                }}
+                >
+                <Ionicons name="card" size={24} color={theme === 'dark' ? 'white' : 'black'} />
+              </TouchableOpacity>
+              <Text className="text-xs text-black dark:text-white mt-1">Transfer</Text>
+          </View>
+          )}
         </View>
 
         {/* Transactions */}
         <View className="bg-gray-100 dark:bg-[#1A1E4A] mx-4 mt-6 rounded-xl p-4">
-          <View className="flex-row justify-between mb-3">
-            <ThemedText className="text-sm text-black dark:text-white">Transaction</ThemedText>
-            <Link href={'/(tabs)/companies'} className="text-xs text-green-500 dark:text-green-400">See All</Link>
+          <View className="flex-row justify-between items-center mb-3">
+            <View className="flex-row items-center">
+              <ThemedText className="text-sm text-black dark:text-white">Transactions</ThemedText>
+              {(filters.startDate || filters.endDate || filters.category || filters.type || filters.company || filters.cashbook) && (
+                <View className="ml-2 px-2 py-1 bg-cyan-100 dark:bg-cyan-800 rounded-full">
+                  <Text className="text-xs text-cyan-600 dark:text-cyan-300 font-semibold">Filtered</Text>
+                </View>
+              )}
+            </View>
+            {recentTransactions.length && (
+              <Link href={`/transactions/${recentTransactions[0].which_cashbook}`} className="text-xs text-green-500 dark:text-green-400">See All</Link>
+            )}
           </View>
 
-          {recentTransactions.map((item: Transaction, index) => (
+          {/* Current Balance Display for Filtered Transactions */}
+          {filteredTransactions.length > 0 && (filters.startDate || filters.endDate || filters.category || filters.type || filters.company || filters.cashbook) && (
+            <View className="mb-3 p-3 rounded-lg bg-white dark:bg-[#2C2F5D]">
+              <View className="flex-row justify-between items-center">
+                <Text className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                  Current Filtered Balance:
+                </Text>
+                <Text
+                  className={`text-lg font-bold ${
+                    currentFilteredBalance >= 0
+                      ? "text-emerald-600 dark:text-green-400"
+                      : "text-red-600 dark:text-red-400"
+                  }`}
+                >
+                  {formatCurrency(currentFilteredBalance.toString())}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {recentTransactions.map((item: any, index) => (
             <View
               key={item.$id || index}
               className="flex-row justify-between items-center py-2 border-b border-gray-200 dark:border-[#2C2F5D]"
             >
-              <View>
+              <View className="flex-1">
                 <ThemedText className="text-black dark:text-white">{item.description || item.memo}</ThemedText>
                 <ThemedText className="text-xs text-gray-500 dark:text-gray-400">
                   {new Date(item.createdAt).toDateString()}
                 </ThemedText>
               </View>
-              <ThemedText
-                className={`font-semibold ${
-                  item.amount < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
-                }`}
-              >
-                {formatCurrency(item.amount)}
-              </ThemedText>
+              <View className="items-end">
+                <ThemedText
+                  className={`font-semibold ${
+                    item.amount < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
+                  }`}
+                >
+                  {formatCurrency(item.amount.toString())}
+                </ThemedText>
+                <Text className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Balance: {formatCurrency(item.balance?.toString() || '0')}
+                </Text>
+              </View>
             </View>
           ))}
 
         </View>
       </ScrollView>
+
+      {/* Transaction Filter Modal */}
+      <TransactionFilter
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApplyFilter={handleFilterApply}
+        currentFilters={filters}
+      />
+
+      {/* Export Modal */}
+      <ExportModal
+        visible={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        transactions={filteredTransactions as any}
+        filteredTransactions={filteredTransactions as any}
+        filters={filters}
+        totalIncome={filteredTotalIncome}
+        totalExpenses={filteredTotalExpenses}
+        netAmount={filteredNetAmount}
+        companyName={companies.find((c: any) => c.name === filters.company)?.name || ''}
+        cashbookName={cashbooks.find((c: any) => c.name === filters.cashbook)?.name || ''}
+      />
     </View>
   );
 }
