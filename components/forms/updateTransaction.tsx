@@ -29,6 +29,7 @@ export default function UpdateTransactionForm({onFormSubmit=null, transactionDat
   const { categories } = useSelector((state: RootState) => state.categories);
   const [showCategoryPicker, setShowCategoryPicker] = React.useState(false);
   const [category, setCategory] = React.useState(transactionData?.category || '');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const dispatch = useDispatch()
   const { showToast } = useToast()
 
@@ -84,6 +85,13 @@ export default function UpdateTransactionForm({onFormSubmit=null, transactionDat
       }
 
   const onSubmit = async (data: any) => {
+    // Prevent duplicate submissions
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
     const transactionPayload = {
       description: data.description,
       category: category,
@@ -103,6 +111,7 @@ export default function UpdateTransactionForm({onFormSubmit=null, transactionDat
           type: 'success', 
           text1: transactionData ? 'Transaction updated successfully!' : 'Transaction added successfully!' 
         });
+        onFormSubmit && onFormSubmit()
       }
     } catch (error: any) {
       console.log(error)
@@ -110,8 +119,9 @@ export default function UpdateTransactionForm({onFormSubmit=null, transactionDat
         type: 'error', 
         text1: error?.message || `Transaction ${transactionData ? 'update' : 'creation'} failed, please try again.` 
       });
+    } finally {
+      setIsSubmitting(false);
     }
-    onFormSubmit && onFormSubmit()
   };
 
   return (
@@ -228,10 +238,20 @@ export default function UpdateTransactionForm({onFormSubmit=null, transactionDat
           </TouchableOpacity>
 
           <TouchableOpacity
-            className="w-full p-4 rounded-xl bg-cyan-600 dark:bg-cyan-500 items-center justify-center shadow-md my-4"
+            className={`w-full p-4 rounded-xl items-center justify-center shadow-md my-4 ${
+              isSubmitting 
+                ? 'bg-gray-400 dark:bg-gray-600' 
+                : 'bg-cyan-600 dark:bg-cyan-500'
+            }`}
             onPress={handleSubmit(onSubmit)}
+            disabled={isSubmitting}
           >
-            <Text className="text-white text-lg font-bold">{transactionData ? 'Update Transaction' : 'Add Transaction'}</Text>
+            <Text className="text-white text-lg font-bold">
+              {isSubmitting 
+                ? (transactionData ? 'Updating Transaction...' : 'Adding Transaction...') 
+                : (transactionData ? 'Update Transaction' : 'Add Transaction')
+              }
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity

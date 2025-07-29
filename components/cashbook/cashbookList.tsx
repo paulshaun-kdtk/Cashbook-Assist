@@ -13,7 +13,7 @@ import { Cashbook } from '@/types/cashbook';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
-import { ScrollView, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { Alert, ScrollView, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { Modalize } from 'react-native-modalize';
 import { useDispatch, useSelector } from 'react-redux';
@@ -52,7 +52,7 @@ export default function CashbooksListScreen() {
     }
   }, [dispatch, whichCompany, companies, username, companyId]);
 
-  const handleCashbookDeletion = (cashBookId: string) => {
+  const handleCashbookDeletion = (cashBookId: string, cashbookName: string) => {
     if (!username) return
     if (balances[cashBookId]) {
       toast.showToast({
@@ -62,15 +62,44 @@ export default function CashbooksListScreen() {
       })
       return
     }
-    dispatch(deleteCashbookThunk({documentId: cashBookId})).then(() => {
-      dispatch(fetchCashbooksThunk(username));
-    });
-
+    
+    Alert.alert(
+      "Delete Cashbook",
+      `Are you sure you want to delete this cashbook?\n\n"${cashbookName}"`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            dispatch(deleteCashbookThunk({documentId: cashBookId}))
+              .then(() => {
+                toast.showToast({
+                  type: 'success',
+                  text1: 'Cashbook Deleted',
+                  text2: 'Cashbook has been successfully deleted'
+                });
+                dispatch(fetchCashbooksThunk(username));
+              })
+              .catch((error: any) => {
+                toast.showToast({
+                  type: 'error',
+                  text1: 'Delete Failed',
+                  text2: 'Failed to delete cashbook'
+                });
+              });
+          }
+        }
+      ]
+    );
   }
-    const renderRightActions = (cashBookId: string) => (
+    const renderRightActions = (cashBookId: string, cashbookName: string) => (
     <TouchableOpacity
       onPress={() => {
-        handleCashbookDeletion(cashBookId);  
+        handleCashbookDeletion(cashBookId, cashbookName);  
       }}
       className="bg-red-600 justify-center items-center w-20 h-full"
     >
@@ -114,7 +143,7 @@ export default function CashbooksListScreen() {
           {filteredCashbooks.map((cashbook: Cashbook, index) => (
             <View key={cashbook.$id}>
                   <Swipeable
-                    renderRightActions={() => renderRightActions(cashbook.$id)}
+                    renderRightActions={() => renderRightActions(cashbook.$id, cashbook.name)}
                   >
             <TouchableOpacity
               onPress={() => router.push(`/transactions/${cashbook.$id}`)}

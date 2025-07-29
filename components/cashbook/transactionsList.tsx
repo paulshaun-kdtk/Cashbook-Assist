@@ -1,6 +1,7 @@
 import { formatCurrency } from "@/assets/formatters/currency";
 import { formatDateShort } from "@/assets/formatters/dates";
 import { useStoredUsername } from "@/hooks/useStoredUsername";
+import { useToast } from "@/hooks/useToast";
 import { RootState } from "@/redux/store";
 import { fetchCashbooksThunk } from "@/redux/thunks/cashbooks/fetch";
 import { fetchExpensesThunk } from "@/redux/thunks/expenses/fetch";
@@ -13,6 +14,7 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
+  Alert,
   FlatList,
   Text,
   TouchableOpacity,
@@ -31,6 +33,7 @@ import Loader from "../ui/loading";
 export default function TransactionsListScreen() {
   const theme = useColorScheme(); // 'light' or 'dark'
   const dispatch = useDispatch();
+  const toast = useToast();
   const { cashbooks } = useSelector((state: RootState) => state.cashbooks);
   const {
     income,
@@ -189,18 +192,61 @@ export default function TransactionsListScreen() {
     updateModalizeRef.current?.open();
   }, []);
 
-  const handleTransactionDeletion = useCallback((documentId: string, transactionType: any) => {
+  const handleTransactionDeletion = useCallback((documentId: string, transactionType: any, description: string) => {
     if (!username) return;
-    if (transactionType === "income") {
-      dispatch(deleteIncomeThunk({ documentId }) as any).then(() => {
-        dispatch(fetchIncomeThunk(username) as any);
-      });
-    } else {
-      dispatch(deleteExpenseThunk({ documentId }) as any).then(() => {
-        dispatch(fetchExpensesThunk(username) as any);
-      });
-    }
-  }, [username, dispatch]);
+    
+    Alert.alert(
+      "Delete Transaction",
+      `Are you sure you want to delete this ${transactionType}?\n\n"${description}"`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            if (transactionType === "income") {
+              dispatch(deleteIncomeThunk({ documentId }) as any)
+                .then(() => {
+                  toast.showToast({
+                    type: 'success',
+                    text1: 'Transaction Deleted',
+                    text2: 'Income transaction has been successfully deleted'
+                  });
+                  dispatch(fetchIncomeThunk(username) as any);
+                })
+                .catch((error: any) => {
+                  toast.showToast({
+                    type: 'error',
+                    text1: 'Delete Failed',
+                    text2: 'Failed to delete income transaction'
+                  });
+                });
+            } else {
+              dispatch(deleteExpenseThunk({ documentId }) as any)
+                .then(() => {
+                  toast.showToast({
+                    type: 'success',
+                    text1: 'Transaction Deleted',
+                    text2: 'Expense transaction has been successfully deleted'
+                  });
+                  dispatch(fetchExpensesThunk(username) as any);
+                })
+                .catch((error: any) => {
+                  toast.showToast({
+                    type: 'error',
+                    text1: 'Delete Failed',
+                    text2: 'Failed to delete expense transaction'
+                  });
+                });
+            }
+          }
+        }
+      ]
+    );
+  }, [username, dispatch, toast]);
 
   const renderRightActions = useCallback((
     transaction: any,
@@ -216,7 +262,7 @@ export default function TransactionsListScreen() {
 
       <TouchableOpacity
         onPress={() => {
-          handleTransactionDeletion(transaction.$id, transactionType);
+          handleTransactionDeletion(transaction.$id, transactionType, transaction.description);
         }}
         className="bg-red-600 justify-center items-center w-[24%] h-full"
       >
@@ -361,7 +407,7 @@ export default function TransactionsListScreen() {
       {/* Header Section */}
       <View className="px-4 flex-row items-center justify-between relative mb-6">
       <View className="flex-row justify-between items-start" />
-        <ThemedText type="title" >
+        <ThemedText type="title" style={{ maxWidth: '70%' }}>
           {whichCashbook?.name || "All Transactions"}
         </ThemedText>
 
@@ -397,7 +443,7 @@ export default function TransactionsListScreen() {
           ListEmptyComponent={ListEmptyComponent}
           ListFooterComponent={renderFooter}
           onEndReached={loadMoreTransactions}
-          contentContainerStyle={{ paddingBottom: 90 }}
+          contentContainerStyle={{ paddingBottom: 490 }}
           onEndReachedThreshold={0.5}
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={() => <View />}
@@ -407,15 +453,14 @@ export default function TransactionsListScreen() {
       <Modalize
         rootStyle={{ 
           backgroundColor: "rgba(0, 0, 0, 0.5)", 
-          zIndex: 9999,
-          elevation: 1000 
+          // zIndex: 9999,
+          // elevation: 1000 
         }}
         modalStyle={{ 
           backgroundColor: "transparent",
-          zIndex: 10000,
-          elevation: 1001
+          // zIndex: 10000,
+          // elevation: 1001
         }}
-        modalHeight={600}
         ref={updateModalizeRef}
         >
         <UpdateTransactionForm transactionData={selectedTransaction} onFormSubmit={handleCloseModal} />
@@ -424,16 +469,15 @@ export default function TransactionsListScreen() {
       <Modalize
         rootStyle={{ 
           backgroundColor: "rgba(0, 0, 0, 0.5)", 
-          flex: 1,
-          zIndex: 9999,
-          elevation: 1000 
+          // flex: 1,
+          // zIndex: 9999,
+          // elevation: 1000 
         }}
         modalStyle={{ 
           backgroundColor: "transparent",
-          zIndex: 10000,
-          elevation: 1001
+          // zIndex: 10000,
+          // elevation: 1001
         }}
-        modalHeight={700}
         ref={modalizeRef}
       >
         <AddTransactionForm onFormSubmit={handleCloseModal} />

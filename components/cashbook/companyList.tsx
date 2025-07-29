@@ -65,7 +65,7 @@ export default function CompanyListPage() {
 
   const handleDeleteCompany = (companyId: string) => {
     if (!username) return
-    if (cashbooks.length){
+    if (cashbooks.some((cb: Cashbook) => cb.which_company === companyId)) {
       toast.showToast({
         type: 'error',
         text1: 'Deletion Restricted',

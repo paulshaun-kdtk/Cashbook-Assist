@@ -1,9 +1,10 @@
 import { useToast } from '@/hooks/useToast';
 import { confirmUserNameBelongsToUser } from '@/redux/appwrite/auth/userActions';
 import { RootState } from '@/redux/store';
-import { loginThunk } from '@/redux/thunks/auth/authThunk';
+import { googleLoginThunk, loginThunk } from '@/redux/thunks/auth/authThunk';
 import { AntDesign, Ionicons } from '@expo/vector-icons'; // For eye icon, Google, and Apple icons
 import { Link, useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TextInput, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -17,12 +18,29 @@ export default function SigninScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const { loading, user } = useSelector((state: RootState) => state.auth)
 
   const router = useRouter();
   const dispatch = useDispatch()
   const { showToast } = useToast();
 
+  // Preload browser for faster OAuth
+  useEffect(() => {
+    const preloadBrowser = async () => {
+      try {
+        await WebBrowser.warmUpAsync();
+      } catch (error) {
+        console.log('Browser warm-up failed:', error);
+      }
+    };
+    
+    preloadBrowser();
+    
+    return () => {
+      WebBrowser.coolDownAsync();
+    };
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -30,6 +48,24 @@ export default function SigninScreen() {
       router.push('/(tabs)')
     }
   }, [router, user, showToast])
+
+  // Reset Google loading state on component unmount or if stuck
+  useEffect(() => {
+    return () => {
+      setGoogleLoading(false);
+    };
+  }, []);
+
+  // Auto-reset Google loading if it's been stuck for too long
+  useEffect(() => {
+    if (googleLoading) {
+      const resetTimer = setTimeout(() => {
+        setGoogleLoading(false);
+      }, 5000); // Reset after 5 seconds max
+
+      return () => clearTimeout(resetTimer);
+    }
+  }, [googleLoading]);
 
   
   const handleLogin = async (e) => {
@@ -52,9 +88,48 @@ export default function SigninScreen() {
     }
   };
 
-  const handleGoogleLogin = () => {
-    console.log('Continue with Google');
-    // Implement Google login logic
+  const handleGoogleLogin = async () => {
+    if (googleLoading) return; // Prevent double clicks
+    
+    setGoogleLoading(true);
+    try {
+      showToast({ type: 'info', text1: 'Opening Google sign in...' });
+      
+      console.log('Starting Google OAuth with web redirect...');
+      
+      const result = await (dispatch as any)(googleLoginThunk()).unwrap();
+      
+      console.log('Google login result:', result);
+      
+      if (result?.initiated) {
+        if (result.authenticated) {
+          // User completed authentication in browser
+          showToast({ type: 'success', text1: 'Google login successful!' });
+          router.replace('/(tabs)');
+        } else {
+          showToast({ type: 'info', text1: 'Complete sign in on shsoftwares.com' });
+        }
+      }
+    } catch (error: any) {
+      console.error('Google login error:', error);
+      showToast({ type: 'error', text1: error?.message || 'Failed to open Google sign in' });
+    } finally {
+      // Reset loading state quickly since OAuth opens external browser
+      setTimeout(() => setGoogleLoading(false), 1000);
+    }
+  };
+
+  // Test function to check if WebBrowser works
+  const testBrowser = async () => {
+    try {
+      console.log('Testing browser...');
+      const result = await WebBrowser.openBrowserAsync('https://google.com');
+      console.log('Browser test result:', result);
+      showToast({ type: 'info', text1: 'Browser test completed' });
+    } catch (error) {
+      console.error('Browser test failed:', error);
+      showToast({ type: 'error', text1: 'Browser test failed' });
+    }
   };
 
   const handleAppleLogin = () => {
@@ -176,14 +251,33 @@ export default function SigninScreen() {
           <View className="flex-1 h-px bg-gray-300 dark:bg-gray-700" />
         </View>
 
+        {/* DEBUG: Test Browser Button */}
+        <TouchableOpacity
+          className="w-full p-2 mb-4 rounded-xl bg-red-500 items-center justify-center"
+          onPress={testBrowser}
+        >
+          <ThemedText className="text-white text-sm">🔍 Test Browser (Debug)</ThemedText>
+        </TouchableOpacity>
+
         {/* Social Login Buttons */}
         <View className="flex-row justify-center gap-4 mb-8">
           <TouchableOpacity
-            className="flex-row items-center justify-center flex-1 p-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-[#1A1E4A] shadow-sm"
+            className={`flex-row items-center justify-center flex-1 p-3 rounded-xl border border-gray-300 dark:border-gray-700 shadow-sm ${
+              googleLoading 
+                ? 'bg-cyan-100 dark:bg-cyan-900' 
+                : 'bg-gray-50 dark:bg-[#1A1E4A]'
+            }`}
             onPress={handleGoogleLogin}
+            disabled={loading || googleLoading}
           >
-            <AntDesign name="google" size={24} color={theme === 'dark' ? 'white' : 'black'} />
-            <ThemedText className="ml-2 text-base font-semibold">Google</ThemedText>
+            {googleLoading ? (
+              <ActivityIndicator size="small" color={theme === 'dark' ? 'white' : 'black'} />
+            ) : (
+              <AntDesign name="google" size={24} color={theme === 'dark' ? 'white' : 'black'} />
+            )}
+            <ThemedText className="ml-2 text-base font-semibold">
+              {googleLoading ? 'Starting...' : 'Google'}
+            </ThemedText>
           </TouchableOpacity>
 
           <TouchableOpacity

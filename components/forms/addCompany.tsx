@@ -18,6 +18,7 @@ export default function AddCompanyForm({onFormSubmit=null}) {
   const dispatch = useDispatch();
   const toast = useToast()
   const {username} = useStoredUsername()
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
    
   const { control, handleSubmit, formState: { errors } } = useForm({
     defaultValues: {
@@ -28,6 +29,13 @@ export default function AddCompanyForm({onFormSubmit=null}) {
 
   // Function to handle form submission
   const onSubmit = async data => {
+    // Prevent duplicate submissions
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
     const companyData = {
         which_key: username,
         name: data.name,
@@ -37,12 +45,13 @@ export default function AddCompanyForm({onFormSubmit=null}) {
         const success = await dispatch(createCompanyThunk({data: companyData})).unwrap()
         if (success) {
             toast.showToast({ type: 'success', text1: 'Company created successfully!' });
+            onFormSubmit && onFormSubmit()
         }
     } catch (error) {
         toast.showToast({ type: 'error', text1: error?.message || 'Company creation failed, please try again.' });
+    } finally {
+      setIsSubmitting(false);
     }
-    onFormSubmit && onFormSubmit()
-    
   };
 
   return (
@@ -114,10 +123,17 @@ export default function AddCompanyForm({onFormSubmit=null}) {
 
           {/* Add Company Button */}
           <TouchableOpacity
-            className="w-full p-4 rounded-xl bg-cyan-700 dark:bg-cyan-600 items-center justify-center mt-4"
+            className={`w-full p-4 rounded-xl items-center justify-center mt-4 ${
+              isSubmitting 
+                ? 'bg-gray-400 dark:bg-gray-600' 
+                : 'bg-cyan-700 dark:bg-cyan-600'
+            }`}
             onPress={handleSubmit(onSubmit)}
+            disabled={isSubmitting}
           >
-            <Text className="text-white text-lg font-bold">Add Company</Text>
+            <Text className="text-white text-lg font-bold">
+              {isSubmitting ? 'Adding Company...' : 'Add Company'}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

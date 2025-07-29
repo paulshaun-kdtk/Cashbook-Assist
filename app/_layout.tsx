@@ -1,6 +1,7 @@
 import { useColorScheme } from '@/hooks/useColorScheme';
 import store from '@/redux/store';
 import { initAuth } from '@/redux/thunks/auth/authThunk';
+import UpdatesChecker from '@/scripts/updatesChecker';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
@@ -32,6 +33,7 @@ function AppLayout() {
       </Stack>
       </GestureHandlerRootView>
       <StatusBar style="auto" />
+      <UpdatesChecker />
       <Toast />
     </ThemeProvider>
   );

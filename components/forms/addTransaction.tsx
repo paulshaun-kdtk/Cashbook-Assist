@@ -25,6 +25,7 @@ export default function AddTransactionForm({onFormSubmit}: {onFormSubmit?: (() =
   const { categories } = useSelector((state: RootState) => state.categories);
   const [showCategoryPicker, setShowCategoryPicker] = React.useState(false);
   const [category, setCategory] = React.useState('');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const dispatch = useDispatch()
   const toast = useToast()
 
@@ -71,6 +72,13 @@ export default function AddTransactionForm({onFormSubmit}: {onFormSubmit?: (() =
       }
   
   const onSubmit = async data => {
+    // Prevent duplicate submissions
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
     const transactionData = {
       description: data.description,
       category: category,
@@ -84,12 +92,14 @@ export default function AddTransactionForm({onFormSubmit}: {onFormSubmit?: (() =
       const success = data.type === 'income' ? await dispatch(createIncomeThunk({data: transactionData})).unwrap() : await dispatch(createExpenseThunk({data: transactionData})).unwrap()
        if (success) {
             toast.showToast({ type: 'success', text1: 'Transaction added successfully!' });
+            onFormSubmit && onFormSubmit()
         }
     }  catch (error) {
         console.log(error)
         toast.showToast({ type: 'error', text1: error?.message || 'Transaction creation failed, please try again.' });
+    } finally {
+      setIsSubmitting(false);
     }
-    onFormSubmit && onFormSubmit()
   };
 
   return (
@@ -206,10 +216,17 @@ export default function AddTransactionForm({onFormSubmit}: {onFormSubmit?: (() =
           </TouchableOpacity>
 
           <TouchableOpacity
-            className="w-full p-4 rounded-xl bg-cyan-600 dark:bg-cyan-500 items-center justify-center shadow-md mt-4"
+            className={`w-full p-4 rounded-xl items-center justify-center shadow-md mt-4 ${
+              isSubmitting 
+                ? 'bg-gray-400 dark:bg-gray-600' 
+                : 'bg-cyan-600 dark:bg-cyan-500'
+            }`}
             onPress={handleSubmit(onSubmit)}
+            disabled={isSubmitting}
           >
-            <Text className="text-white text-lg font-bold">Add Transaction</Text>
+            <Text className="text-white text-lg font-bold">
+              {isSubmitting ? 'Adding Transaction...' : 'Add Transaction'}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

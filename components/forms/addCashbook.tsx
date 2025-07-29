@@ -17,6 +17,7 @@ export default function AddCashbookForm({onFormSubmit=null}) {
   const { username } = useStoredUsername()
   const [showPicker, setShowPicker] = React.useState(false);
   const [currency, setCurrency] = React.useState(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const { control, handleSubmit, formState: { errors } } = useForm({
     defaultValues: {
@@ -28,6 +29,12 @@ export default function AddCashbookForm({onFormSubmit=null}) {
 
   // Function to handle form submission
   const onSubmit = async data => {
+    // Prevent duplicate submissions
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
 
     const cashbookData = {
       which_key: username,
@@ -42,11 +49,13 @@ export default function AddCashbookForm({onFormSubmit=null}) {
       const success = await dispatch(createCashbookThunk({data: cashbookData})).unwrap()
       if (success) {
         toast.showToast({ type: 'success', text1: 'Cashbook created successfully!' });
+        onFormSubmit && onFormSubmit()
       }
     } catch (error) {
       toast.showToast({ type: 'error', text1: error?.message || 'Cashbook creation failed, please try again.' });
+    } finally {
+      setIsSubmitting(false);
     }
-    onFormSubmit && onFormSubmit()
   };
 
   return (
@@ -119,10 +128,17 @@ export default function AddCashbookForm({onFormSubmit=null}) {
                 </ThemedText>
               </TouchableOpacity>
           <TouchableOpacity
-            className="w-full p-4 rounded-xl bg-cyan-600 dark:bg-cyan-500 items-center justify-center shadow-md mt-4"
+            className={`w-full p-4 rounded-xl items-center justify-center shadow-md mt-4 ${
+              isSubmitting 
+                ? 'bg-gray-400 dark:bg-gray-600' 
+                : 'bg-cyan-600 dark:bg-cyan-500'
+            }`}
             onPress={handleSubmit(onSubmit)}
+            disabled={isSubmitting}
           >
-            <Text className="text-white text-lg font-bold">Add Cashbook</Text>
+            <Text className="text-white text-lg font-bold">
+              {isSubmitting ? 'Adding Cashbook...' : 'Add Cashbook'}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

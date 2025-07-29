@@ -1,6 +1,6 @@
 // store/authSlice.js
 import { createSlice } from "@reduxjs/toolkit";
-import { checkSessionThunk, loginThunk, logoutThunk } from "../../thunks/auth/authThunk";
+import { checkSessionThunk, completeOAuthThunk, googleLoginThunk, loginThunk, logoutThunk, webToMobileAuthThunk } from "../../thunks/auth/authThunk";
 
 const authSlice = createSlice({
   name: "auth",
@@ -32,6 +32,42 @@ reducers: {
         state.error = null;
       })
       .addCase(loginThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(googleLoginThunk.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(googleLoginThunk.fulfilled, (state, action) => {
+        // OAuth flow started successfully - stop loading
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(googleLoginThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(completeOAuthThunk.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(completeOAuthThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+        state.error = null;
+      })
+      .addCase(completeOAuthThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(webToMobileAuthThunk.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(webToMobileAuthThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+        state.error = null;
+      })
+      .addCase(webToMobileAuthThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
