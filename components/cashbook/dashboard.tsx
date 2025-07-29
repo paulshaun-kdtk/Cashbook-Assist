@@ -16,7 +16,7 @@ import { Link, router } from 'expo-router';
 import React from 'react';
 import { ScrollView, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-
+import NotificationDropdown from '../ui/notificationDropdown';
 
 export default function HomeScreen() {
   const theme = useColorScheme();
@@ -33,7 +33,8 @@ export default function HomeScreen() {
     const { cashbooks } = useSelector(
       (state: RootState) => state.cashbooks
     );
-
+  
+  const [showNotificationDropdown, setShowNotificationDropdown] = React.useState(false);
   const [showFilterModal, setShowFilterModal] = React.useState(false);
   const [showExportModal, setShowExportModal] = React.useState(false);
   const [filters, setFilters] = React.useState({
@@ -196,8 +197,8 @@ export default function HomeScreen() {
           <TouchableOpacity onPress={() => setShowFilterModal(true)}>
             <SimpleLineIcons name="equalizer" size={24} color={theme === 'dark' ? 'white' : 'black'} />
           </TouchableOpacity>
-           
-          <TouchableOpacity>
+
+          <TouchableOpacity onPress={() => setShowNotificationDropdown(true)}>
             <Ionicons name="notifications-outline" size={24} color={theme === 'dark' ? 'white' : 'black'} />
           </TouchableOpacity>
       </View>
@@ -207,7 +208,7 @@ export default function HomeScreen() {
         <View className="bg-gray-100 dark:bg-[#1A1E4A] mx-4 mt-6 rounded-xl p-4">
           <View className="flex-row justify-between items-center">
             <ThemedText className="text-black dark:text-white"> Balance</ThemedText>
-            <ThemedText className="text-xs text-gray-500 dark:text-white">All Time</ThemedText>
+            <ThemedText className="text-xs text-gray-500 dark:text-white">All Companies</ThemedText>
           </View>
           <ThemedText className="text-4xl font-bold text-green-500 dark:text-green-400 mt-2">{formatCurrency(totalBalance.toString())}</ThemedText>
 
@@ -350,6 +351,11 @@ export default function HomeScreen() {
         onClose={() => setShowFilterModal(false)}
         onApplyFilter={handleFilterApply}
         currentFilters={filters}
+      />
+
+      <NotificationDropdown
+        visible={showNotificationDropdown}
+        onClose={() => setShowNotificationDropdown(false)}
       />
 
       {/* Export Modal */}

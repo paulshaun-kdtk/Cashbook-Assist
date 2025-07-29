@@ -6,12 +6,12 @@ import { Category } from '@/types/category';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-    Modal,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    useColorScheme,
-    View,
+  Modal,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  useColorScheme,
+  View,
 } from 'react-native';
 import DatePicker from 'react-native-date-picker';
 import { useDispatch, useSelector } from 'react-redux';

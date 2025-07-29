@@ -16,19 +16,9 @@
         "simulator": false,
         "distribution": "internal"
       },
-      "channel": "preview2" 
+      "channel": "preview" 
     },
     "production": {
-      "autoIncrement": true
-    },
-    "realdevice-ios": {
-      "distribution": "internal",
-      "developmentClient": false,
-      "autoIncrement": true
-    },
-    "realdevice-android": {
-      "distribution": "internal",
-      "developmentClient": false,
       "autoIncrement": true
     }
   },

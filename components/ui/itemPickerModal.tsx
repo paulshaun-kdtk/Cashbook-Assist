@@ -1,3 +1,4 @@
+import { formatTextCapitalize } from "@/assets/formatters/text";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
@@ -95,7 +96,7 @@ export default function ItemPickerModal({
             } rounded-2xl mb-2`}
           >
             <Text className="text-white">
-              {is_currency ? item.currency : item.name}
+              {is_currency ? item.currency : formatTextCapitalize(item.name)}
               {is_currency && ` (${item.symbol})`}
             </Text>
 

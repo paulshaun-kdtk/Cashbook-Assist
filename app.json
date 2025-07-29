@@ -15,29 +15,15 @@
         "ITSAppUsesNonExemptEncryption": false
       }
     },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/appIcon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "edgeToEdgeEnabled": true,
-      "package": "com.shuan_s.cashbookassist"
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/appIcon.png"
+    "splash": {
+      "image": "./assets/images/appIcon.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#ffffff"
     },
     "plugins": [
-      "expo-router",
-      "expo-sqlite",
-      "expo-web-browser"
+      "expo-splash-screen"
     ],
-    "experiments": {
-      "typedRoutes": true
-    },
     "extra": {
-      "router": {},
       "eas": {
         "projectId": "86ace278-9d7a-4a98-96ac-2da1c62862e3"
       }
@@ -47,6 +33,42 @@
     },
     "updates": {
       "url": "https://u.expo.dev/86ace278-9d7a-4a98-96ac-2da1c62862e3"
+    },
+    "android": {
+      "package": "com.shuan_s.cashbookassist"
     }
+  },
+  "android": {
+    "adaptiveIcon": {
+      "foregroundImage": "./assets/images/appIcon.png",
+      "backgroundColor": "#ffffff"
+    },
+    "edgeToEdgeEnabled": true,
+    "package": "com.shuan_s.cashbookassist"
+  },
+  "web": {
+    "bundler": "metro",
+    "output": "static",
+    "favicon": "./assets/images/appIcon.png"
+  },
+  "plugins": [
+    "expo-router",
+    "expo-sqlite",
+    "expo-web-browser"
+  ],
+  "experiments": {
+    "typedRoutes": true
+  },
+  "extra": {
+    "router": {},
+    "eas": {
+      "projectId": "86ace278-9d7a-4a98-96ac-2da1c62862e3"
+    }
+  },
+  "runtimeVersion": {
+    "policy": "appVersion"
+  },
+  "updates": {
+    "url": "https://u.expo.dev/86ace278-9d7a-4a98-96ac-2da1c62862e3"
   }
 }
