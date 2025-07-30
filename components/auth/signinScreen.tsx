@@ -2,7 +2,7 @@ import { useToast } from '@/hooks/useToast';
 import { confirmUserNameBelongsToUser } from '@/redux/appwrite/auth/userActions';
 import { RootState } from '@/redux/store';
 import { googleLoginThunk, loginThunk } from '@/redux/thunks/auth/authThunk';
-import { AntDesign, Ionicons } from '@expo/vector-icons'; // For eye icon, Google, and Apple icons
+import { Ionicons } from '@expo/vector-icons'; // For eye icon, Google, and Apple icons
 import { Link, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useEffect, useState } from 'react';
@@ -230,7 +230,7 @@ export default function SigninScreen() {
           </View>
 
           <View className="flex-row justify-end items-center mb-6">
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync('https://cashbook-assist.shsoftwares.com/signup')}>
               <ThemedText className="text-sm text-cyan-500 dark:text-cyan-400 font-semibold">Forgot Password?</ThemedText>
             </TouchableOpacity>
           </View>
@@ -245,22 +245,22 @@ export default function SigninScreen() {
         </View>
 
         {/* Continue With Separator */}
-        <View className="flex-row items-center justify-center my-6">
+        {/* <View className="flex-row items-center justify-center my-6">
           <View className="flex-1 h-px bg-gray-300 dark:bg-gray-700" />
           <ThemedText className="text-sm text-gray-500 dark:text-gray-400 mx-4">Or continue with</ThemedText>
           <View className="flex-1 h-px bg-gray-300 dark:bg-gray-700" />
-        </View>
+        </View> */}
 
         {/* DEBUG: Test Browser Button */}
-        <TouchableOpacity
+        {/* <TouchableOpacity
           className="w-full p-2 mb-4 rounded-xl bg-red-500 items-center justify-center"
           onPress={testBrowser}
         >
           <ThemedText className="text-white text-sm">🔍 Test Browser (Debug)</ThemedText>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* Social Login Buttons */}
-        <View className="flex-row justify-center gap-4 mb-8">
+        {/* <View className="flex-row justify-center gap-4 mb-8">
           <TouchableOpacity
             className={`flex-row items-center justify-center flex-1 p-3 rounded-xl border border-gray-300 dark:border-gray-700 shadow-sm ${
               googleLoading 
@@ -287,12 +287,12 @@ export default function SigninScreen() {
             <AntDesign name="apple1" size={24} color={theme === 'dark' ? 'white' : 'black'} />
             <ThemedText className="ml-2 text-base font-semibold">Apple</ThemedText>
           </TouchableOpacity>
-        </View>
+        </View> */}
 
         {/* Sign Up Link */}
         <View className="flex-row justify-center mt-8">
           <ThemedText className="text-sm text-gray-700 dark:text-gray-300">Don't have an account? </ThemedText>
-          <TouchableOpacity onPress={() => router.push('/auth/signup')}>
+          <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync('https://cashbook-assist.shsoftwares.com/signup')}>
             <ThemedText className="text-sm text-cyan-500 dark:text-cyan-400 font-bold">Sign Up</ThemedText>
           </TouchableOpacity>
         </View>

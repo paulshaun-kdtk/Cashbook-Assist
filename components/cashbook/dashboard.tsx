@@ -1,5 +1,6 @@
 import { formatCurrency } from '@/assets/formatters/currency';
 import { ThemedText } from '@/components/ThemedText';
+import TransferFundsModal from '@/components/forms/transferFunds';
 import ExportModal from '@/components/ui/exportModal';
 import TransactionFilter from '@/components/ui/transactionFilter';
 import { useStoredUsername } from '@/hooks/useStoredUsername';
@@ -14,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
 import { Link, router } from 'expo-router';
 import React from 'react';
-import { ScrollView, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { Modal, ScrollView, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import NotificationDropdown from '../ui/notificationDropdown';
 
@@ -37,6 +38,8 @@ export default function HomeScreen() {
   const [showNotificationDropdown, setShowNotificationDropdown] = React.useState(false);
   const [showFilterModal, setShowFilterModal] = React.useState(false);
   const [showExportModal, setShowExportModal] = React.useState(false);
+  const [showTransferModal, setShowTransferModal] = React.useState(false);
+  const [showCashbookSelector, setShowCashbookSelector] = React.useState(false);
   const [filters, setFilters] = React.useState({
     startDate: "",
     endDate: "",
@@ -236,8 +239,8 @@ export default function HomeScreen() {
             <View className="items-center">
               <TouchableOpacity
               className="bg-gray-100 dark:bg-[#1A1E4A] rounded-xl p-4 w-lg"
-              onPress={() => {router.push(`/(companies)/transactions/${(cashbooks[0] as any)?.$id}`)}}>
-              <Ionicons name="add" size={24} color={theme === 'dark' ? 'white' : 'black'} />
+              onPress={() => setShowCashbookSelector(true)}>
+              <Ionicons name="add" size={28} color={theme === 'dark' ? 'white' : 'black'} />
               </TouchableOpacity>
               <Text className="text-xs text-black dark:text-white mt-1">Add</Text>
             </View>
@@ -265,15 +268,13 @@ export default function HomeScreen() {
           </View> */}
 
           {/* Transfer Action */}
-          {filteredTransactions.length && (
+          {cashbooks.length > 1 && (
             <View className="items-center">
               <TouchableOpacity
                 className="bg-gray-100 dark:bg-[#1A1E4A] rounded-xl p-4 w-lg"
-                onPress={() => {
-                  router.push(`/transactions/${(cashbooks[0] as any)?.$id}`)
-                }}
+                onPress={() => setShowTransferModal(true)}
                 >
-                <Ionicons name="card" size={24} color={theme === 'dark' ? 'white' : 'black'} />
+                <Ionicons name="swap-horizontal" size={24} color={theme === 'dark' ? 'white' : 'black'} />
               </TouchableOpacity>
               <Text className="text-xs text-black dark:text-white mt-1">Transfer</Text>
           </View>
@@ -341,7 +342,6 @@ export default function HomeScreen() {
               </View>
             </View>
           ))}
-
         </View>
       </ScrollView>
 
@@ -371,6 +371,68 @@ export default function HomeScreen() {
         companyName={companies.find((c: any) => c.name === filters.company)?.name || ''}
         cashbookName={cashbooks.find((c: any) => c.name === filters.cashbook)?.name || ''}
       />
+
+      {/* Transfer Funds Modal */}
+      <TransferFundsModal
+        visible={showTransferModal}
+        onClose={() => setShowTransferModal(false)}
+      />
+
+      {/* Cashbook Selector Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showCashbookSelector}
+        onRequestClose={() => setShowCashbookSelector(false)}
+      >
+        <View className="flex-1 justify-center items-center bg-black bg-opacity-50">
+          <View className="bg-white dark:bg-[#1A1E4A] rounded-2xl p-6 m-4 w-4/5 max-h-96">
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-lg font-bold text-black dark:text-white">
+                Select Cashbook
+              </Text>
+              <TouchableOpacity onPress={() => setShowCashbookSelector(false)}>
+                <Ionicons name="close" size={24} color={theme === 'dark' ? 'white' : 'black'} />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView className="max-h-64">
+              {(cashbooks as { $id: string; name: string; which_company: string }[]).map((cashbook) => {
+                const company = (companies as { $id: string; name: string }[]).find(
+                  (comp) => comp.$id === cashbook.which_company
+                );
+                
+                return (
+                  <TouchableOpacity
+                    key={cashbook.$id}
+                    className="p-4 border-b border-gray-200 dark:border-[#2C2F5D]"
+                    onPress={() => {
+                      setShowCashbookSelector(false);
+                      router.push(`/(companies)/transactions/${cashbook.$id}`);
+                    }}
+                  >
+                    <View className="flex-row justify-between items-center">
+                      <View>
+                        <Text className="text-base font-medium text-black dark:text-white">
+                          {cashbook.name}
+                        </Text>
+                        <Text className="text-sm text-gray-500 dark:text-gray-400">
+                          {company?.name || 'Unknown Company'}
+                        </Text>
+                      </View>
+                      <View className="items-end">
+                        <Text className="text-sm font-medium text-green-600 dark:text-green-400">
+                          {formatCurrency((balances[cashbook.$id] || 0).toString())}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

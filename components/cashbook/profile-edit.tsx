@@ -2,6 +2,7 @@ import { useStoredUsername } from '@/hooks/useStoredUsername';
 import { logoutThunk } from '@/redux/thunks/auth/authThunk';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import React, { useState } from 'react';
 import { LayoutAnimation, Platform, ScrollView, Text, TextInput, TouchableOpacity, UIManager, useColorScheme, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -44,9 +45,8 @@ export default function EditProfilePage() {
     // Implement logic to delete all user-related data (requires confirmation)
   };
 
-  const handleDeleteAccount = () => {
-    console.log('Deleting account and all related data...');
-    // Implement logic to delete user account (requires strong confirmation)
+  const handleDeleteAccount = async () => {
+    await WebBrowser.openBrowserAsync('https://cashbook-assist.shsoftwares.com/profile');
   };
 
   const toggleSensitiveActions = () => {
@@ -140,14 +140,6 @@ export default function EditProfilePage() {
             >
               <MaterialIcons name="logout" size={24} color="white" className="mr-2" />
               <Text className="text-white text-base font-bold">Logout</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              className="w-full p-3 rounded-lg bg-red-500 dark:bg-red-600 flex-row items-center justify-center mb-3"
-              onPress={handleDeleteAllData}
-            >
-              <MaterialIcons name="delete-outline" size={24} color="white" className="mr-2" />
-              <Text className="text-white text-base font-bold">Erase All Transactional Data</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
