@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Checkbox from "@/components/form/components/input/Checkbox";
 import Input from "@/components/form/components/input/InputField";
 import Label from "@/components/form/components/Label";
@@ -11,7 +11,13 @@ import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { confirmUserName } from "@/redux/auth/confirmUser";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSelector } from "react-redux";
+import PlanPicker from "./PlanPicker";
 
+interface AuthState {
+  auth: {
+    authenticated: boolean;
+  };
+}
 
 export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -19,8 +25,9 @@ export default function SignUpForm() {
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPlanPicker, setShowPlanPicker] = useState(false);
 
-  const { authenticated } = useSelector((state) => state.auth);
+  const { authenticated } = useSelector((state: AuthState) => state.auth);
 
   const router = useRouter()
   const [formData, setFormData] = useState({
@@ -32,7 +39,20 @@ export default function SignUpForm() {
   
   const searchParams = useSearchParams()
   const plan = searchParams.get("plan")
+  const sys = searchParams.get("sys") || "cashbook" // Default to cashbook
   const is_annual = plan === "annual"
+
+  // Check if we need to show plan picker
+  useEffect(() => {
+    if (!plan) {
+      setShowPlanPicker(true);
+    }
+  }, [plan]);
+
+  const handlePlanSelected = () => {
+    setShowPlanPicker(false);
+    // The URL will already be updated by PlanPicker component
+  };
 
 
   const disabled = !formData.fullName || !formData.username || !formData.email || !formData.password || checkingUsername || !usernameAvailable;
@@ -58,7 +78,8 @@ async function handleSubscriptionCreate() {
         subscriptionId: "to-be-generated",
         plan_id: 'to-be-generated',
         password: password,
-        plan: plan
+        plan: plan,
+        sys: sys
       })
     });
 
@@ -115,6 +136,24 @@ async function handleUsernameCheck() {
     }
   }, [authenticated, router]);
 
+  // Show plan picker if no plan is selected
+  if (!plan || showPlanPicker) {
+    return (
+      <div className="flex flex-col flex-1 lg:w-1/2 w-full overflow-y-auto no-scrollbar">
+        <div className="w-full max-w-md sm:pt-10 mx-auto">
+          <Link
+            href="/"
+            className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+          >
+            <ChevronLeftIcon />
+            Back to home
+          </Link>
+        </div>
+        <PlanPicker onPlanSelected={handlePlanSelected} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full overflow-y-auto no-scrollbar">
       
@@ -135,7 +174,7 @@ async function handleUsernameCheck() {
               Sign Up 
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Fill the form below to sign-up for the <strong>Book Assist</strong> {is_annual ? "annual" : "monthly"} plan!
+              Fill the form below to sign-up for the <strong>Cashbook Assist</strong> {is_annual ? "annual" : "monthly"} plan!
             </p>
           </div>
           <div>
@@ -164,7 +203,7 @@ async function handleUsernameCheck() {
                       type="text"
                       id="username"
                       name="username"
-                      success={usernameAvailable}
+                      success={usernameAvailable === true}
                       error={formData.username !== "" && usernameAvailable === false}
                       disabled={checkingUsername}
                       className="relative"
@@ -256,15 +295,21 @@ async function handleUsernameCheck() {
                         Create account and pay later
                     </Button>
 
-                    <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID, vault: true, intent: "subscription" }}>
+                    <PayPalScriptProvider options={{ 
+                      clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '', 
+                      vault: true, 
+                      intent: "subscription" 
+                    }}>
                       <PayPalButtons
                         style={{ layout: "vertical" }}
                         createSubscription={(data, actions) => {
                           return actions.subscription.create({
-                            plan_id: is_annual ? process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID_ANNUAL : process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID,
+                            plan_id: is_annual 
+                              ? process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID_ANNUAL || ''
+                              : process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID || '',
                           });
                         }}
-                        onApprove={async (data, actions) => {
+                        onApprove={async (data) => {
                           const fullName = formData.fullName;
                           const username = formData.username;
                           const email = formData.email;
@@ -282,6 +327,7 @@ async function handleUsernameCheck() {
                               userAlreadyExists: false,
                               on_free_trial: false,
                               plan: plan,
+                              sys: sys,
                               plan_id: is_annual ? process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID_ANNUAL : process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID,
                               subscriptionId: data.subscriptionID
                             })

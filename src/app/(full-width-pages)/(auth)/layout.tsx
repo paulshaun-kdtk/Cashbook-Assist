@@ -21,7 +21,7 @@ export default function AuthLayout({
             <div className="relative items-center justify-center  flex z-1">
               <GridShape />
               <div className="flex flex-col items-center max-w-xs">
-                <Link href="/dashboard" className="block mb-4">
+                <Link href="/cashbook-assist/dashboard" className="block mb-4">
                   <Image
                     width={231}
                     height={48}

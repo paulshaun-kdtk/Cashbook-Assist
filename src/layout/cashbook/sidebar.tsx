@@ -9,7 +9,6 @@ import { TbFileAnalytics, TbReportMoney } from "react-icons/tb";
 import { FaMoneyCheckAlt } from "react-icons/fa";
 import { MdSummarize } from "react-icons/md";
 import PrivateRoute from "@/redux/auth/privateRoute";
-import SideBarLogoutWidget from "../SideBarLogoutWidget";
 
 const cashbookItems = [
   {
@@ -127,7 +126,6 @@ const CashbookSidebar: React.FC = () => {
             </ul>
           </nav>
         </div>
-        {isExpanded || isHovered || isMobileOpen ? <SideBarLogoutWidget /> : null} 
       </aside>
     </PrivateRoute>
   );
