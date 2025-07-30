@@ -1,0 +1,20 @@
+
+export const appwriteCreds = {
+    apiUrl : 'https://cloud.appwrite.io/v1',
+    account_collection_id : '6793fadd0018b09a485e',  
+    user_collection_id : '6772a8a7003524b8cce5',
+    income_source_collection_id : '6799011e0029cd00a39a',
+    income_collection_id : '677bea990027b89debbc',
+    expense_collection_id : '677bf45a003343d557a0',
+    customer_collection_id : '67a322fe002e51696e74',
+    stock_item_collection_id : '672b93f4003ddfddb19f',
+    sale_collection_id : '6772a1df0014923d0b63',
+    credit_collection_id : "67efe9c0003105f351b1",
+    debt_collection_id: "67e26fe60028b4eccbac",
+    wishlist_collection_id: "672b93660012e69d9743",
+    subscription_collection_id: "685a92ab0006f4bc4ace",
+    projectId : process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID,
+    databaseId : process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID, 
+    apiKey : process.env.NEXT_PUBLIC_APPWRITE_API_KEY,
+    devKey : process.env.NEXT_PUBLIC_APPWRITE_DEV_KEY,
+}

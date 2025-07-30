@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/redux/auth/authSlice.js", "src/redux/appwrite/config.js", "src/redux/auth/privateRoute.tsx", "src/redux/api/slices/salesSlice.js", "src/redux/api/thunks/customers/fetch.js", "src/redux/api/thunks/cleanup/duplicates.js", "src/redux/api/thunks/stock/post.js", "src/utils/formatters/modules/stock_data_formatter.js", "src/components/form/stock/batch_import.jsx", "src/components/form/sales/batch_import.jsx", "src/redux/api/thunks/cleanup/remove_duplicates.js", "src/redux/api/thunks/purchases/post.js", "src/redux/api/thunks/category/post.js", "src/redux/api/thunks/category/fetch.js"],
+  "exclude": ["node_modules"]
+}

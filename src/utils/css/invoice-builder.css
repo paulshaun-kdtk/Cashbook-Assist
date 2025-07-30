@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 2mm;
+    }
+
+    body * {
+        visibility: hidden;
+        font-size: 10px !important;
+    }
+
+    #invoice-content,
+    #invoice-content * {
+        visibility: visible;
+    }
+
+    #invoice-content {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 3mm;
+        box-shadow: none;
+        border-radius: 0;
+        color: black !important;
+        background-color: white !important;
+        font-size: 10px !important;
+    }
+
+    #invoice-content h1, 
+    #invoice-content h2, 
+    #invoice-content h3, 
+    #invoice-content h4, 
+    #invoice-content h5, 
+    #invoice-content h6 {
+        font-size: 28px !important;
+        margin: 4px 0 !important;
+    }
+
+    #invoice-content p,
+    #invoice-content li,
+    #invoice-content span {
+        font-size: 10px !important;
+        line-height: 1.2 !important;
+    }
+
+    #invoice-content table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 9px !important;
+    }
+
+    #invoice-content table th,
+    #invoice-content table td {
+        padding: 4px 6px !important;
+        border: 1px solid #000 !important;
+        word-wrap: break-word;
+    }
+
+    #invoice-content input,
+    #invoice-content textarea {
+        background-color: transparent !important;
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+        color: black !important;
+    }
+
+    #no-print {
+        display: none !important;
+    }
+
+    /* Avoid page breaks inside tables or important sections */
+    .avoid-break {
+        page-break-inside: avoid !important;
+    }
+}
