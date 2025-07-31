@@ -9,17 +9,17 @@ import { createIncomeThunk } from '@/redux/thunks/income/post';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    useColorScheme,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useColorScheme,
+  View,
 } from 'react-native';
 import DatePicker from 'react-native-date-picker';
 import { useDispatch, useSelector } from 'react-redux';
@@ -105,12 +105,12 @@ export default function TransferFundsModal({ visible, onClose }: TransferFundsMo
       await dispatch(createExpenseThunk({
         data: {
           which_cashbook: fromCashbook,
+          which_key: username,
           amount: transferAmount,
           category: 'Transfer Out',
           description: `${description} (Transfer to ${toCashbookName})`,
           memo: `${description}`,
-          date: timestamp,
-          createdBy: username || ''
+          createdAt: timestamp,
         }
       }) as any);
 
@@ -118,12 +118,12 @@ export default function TransferFundsModal({ visible, onClose }: TransferFundsMo
       await dispatch(createIncomeThunk({
         data: {
           which_cashbook: toCashbook,
+          which_key: username,
           amount: transferAmount,
           category: 'Transfer In',
           description: `${description} (Transfer from ${fromCashbookName})`,
           memo: `${description}`,
-          date: timestamp,
-          createdBy: username || ''
+          createdAt: timestamp,
         }
       }) as any);
 

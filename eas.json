@@ -20,10 +20,15 @@
     },
     "production": {
       "autoIncrement": true
+      
     }
   },
   "submit": {
-    "production": {},
+    "production": {
+      "ios": {
+          "ascAppId": "6749332227"
+        }
+    },
     "realdevice-ios": {},
     "realdevice-android": {}
   }

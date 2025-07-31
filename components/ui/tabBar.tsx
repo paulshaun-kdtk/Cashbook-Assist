@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const tabConfig = [
   { name: 'index', icon: 'home-outline', label: 'Home' },
-  { name: 'companies', icon: 'file-tray-full-outline', label: 'Companies' },
+  { name: 'dashboard', icon: 'bar-chart-outline', label: 'Dashboard' },
   { name: 'profile', icon: 'person-circle-outline', label: 'Profile' },
 ];
 
@@ -19,7 +19,7 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
 
   return (
     <View
-      className="absolute left-0 right-0 bottom-0 h-20 rounded-t-full flex-row justify-around items-center px-6"
+      className="absolute left-0 right-0 bottom-0 h-20 rounded-t-5 flex-row justify-around items-center px-6"
       style={{
         backgroundColor,
         marginBottom: Platform.OS === "ios" ? 0 : insets.bottom

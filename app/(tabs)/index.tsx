@@ -1,7 +1,7 @@
-import HomeScreen from '@/components/cashbook/dashboard';
+import CompanyListScreen from '@/components/cashbook/companyList';
 
-export default function Dashboard() {
+export default function CompaniesScreen() {
   return (
-      <HomeScreen />
-  );
+    <CompanyListScreen />
+    );
 }

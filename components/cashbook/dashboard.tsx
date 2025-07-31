@@ -268,7 +268,8 @@ export default function HomeScreen() {
           </View> */}
 
           {/* Transfer Action */}
-          {cashbooks.length > 1 && (
+          
+          {/* {cashbooks.length > 1 && ( */}
             <View className="items-center">
               <TouchableOpacity
                 className="bg-gray-100 dark:bg-[#1A1E4A] rounded-xl p-4 w-lg"
@@ -278,7 +279,7 @@ export default function HomeScreen() {
               </TouchableOpacity>
               <Text className="text-xs text-black dark:text-white mt-1">Transfer</Text>
           </View>
-          )}
+          {/* )} */}
         </View>
 
         {/* Transactions */}
