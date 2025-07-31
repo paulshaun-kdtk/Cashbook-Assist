@@ -67,7 +67,7 @@ export default function DuplicateTable({ search }: DuplicateTableProps) {
     setLoading(false);
     loadingBarRef.current?.complete();
     alert("Duplicates deleted.");
-    router.replace("/dashboard")
+    router.replace("/cashbook-assist/dashboard")
   };
 
   const filteredItems = duplicates.filter((item: Duplicate) =>

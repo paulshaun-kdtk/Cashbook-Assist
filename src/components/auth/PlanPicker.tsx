@@ -81,7 +81,7 @@ const PlanPicker: React.FC<PlanPickerProps> = ({ onPlanSelected }) => {
           Choose Your Plan
         </h1>
         <p className="text-lg text-gray-600 dark:text-gray-400">
-          Select the perfect plan for your cashbook management needs
+          Select the perfect plan for your cashbook management needs and enjoy a 7-day free trial on all plans. Cancel anytime.
         </p>
       </div>
 

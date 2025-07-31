@@ -79,7 +79,7 @@ export default function SignInForm() {
 
   useEffect(() => {
     if (authenticated) {
-      router.replace("/dashboard");
+      router.replace("/cashbook-assist/dashboard");
     }
   }, [authenticated, router]);
 

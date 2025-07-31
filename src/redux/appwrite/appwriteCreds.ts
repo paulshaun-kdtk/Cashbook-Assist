@@ -7,6 +7,8 @@ export const appwriteCreds = {
     income_collection_id : '677bea990027b89debbc',
     expense_collection_id : '677bf45a003343d557a0',
     subscription_collection_id: "6884ab27000152eee35e",
+    company_collection_id: "6881462a0014df352b12",
+    cashbook_collection_id: "6883c15b0007866cb482",
     projectId : process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID,
     databaseId : process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID, 
     apiKey : process.env.NEXT_PUBLIC_APPWRITE_API_KEY,

@@ -47,16 +47,20 @@ export const useDeleteAccount = () => {
   const [previewData, setPreviewData] = useState<PreviewResponse | null>(null);
 
   const previewAccountDeletion = async (email?: string, userId?: string) => {
-    if (!email && !userId) {
-      toast.error('Either email or userId is required');
+    const unique_id = localStorage.getItem('unique_id') || '';
+    
+    if (!email && !userId && !unique_id) {
+      toast.error('Either email, userId, or unique_id is required');
       return null;
     }
 
     setIsPreviewLoading(true);
     try {
       const params = new URLSearchParams();
+      // Only add parameters if they exist
       if (email) params.append('email', email);
       if (userId) params.append('userId', userId);
+      if (unique_id) params.append('unique_id', unique_id);
 
       const response = await fetch(`/api/users/delete-account?${params.toString()}`, {
         method: 'GET',
@@ -85,19 +89,27 @@ export const useDeleteAccount = () => {
   };
 
   const deleteAccount = async (email?: string, userId?: string) => {
-    if (!email && !userId) {
-      toast.error('Either email or userId is required');
+    const unique_id = localStorage.getItem('unique_id') || '';
+    if (!email && !userId && !unique_id) {
+      toast.error('Either email, userId, or unique_id is required');
       return null;
     }
 
     setIsLoading(true);
     try {
+      const requestBody: { email?: string; userId?: string; unique_id?: string } = {};
+      
+      // Only add parameters if they exist
+      if (email) requestBody.email = email;
+      if (userId) requestBody.userId = userId;
+      if (unique_id) requestBody.unique_id = unique_id;
+
       const response = await fetch('/api/users/delete-account', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, userId }),
+        body: JSON.stringify(requestBody),
       });
 
       const data: DeleteAccountResponse = await response.json();

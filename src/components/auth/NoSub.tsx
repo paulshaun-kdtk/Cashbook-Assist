@@ -1,7 +1,7 @@
 "use client"
 import React, { useState } from 'react';
 import ThemeTogglerTwo from '../common/ThemeTogglerTwo';
-import { CheckIcon } from './Landing';
+import { FaCheck } from 'react-icons/fa6';
 import { PayPalButtons, PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
@@ -39,10 +39,10 @@ export const SubscriptionPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             email: email,
-            plan: selectedPlan,
             plan_id: selectedPlan === 'annually' ? process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID_ANNUAL : process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID,
             subscriptionId: data,
             userAlreadyExists: true,
+            plan: selectedPlan === 'annually' ? 'annual' : 'monthly',
             subAlreadyExists: updateSub,
             on_free_trial: free_trial,
         })
@@ -52,7 +52,7 @@ export const SubscriptionPage = () => {
 
         if (result.success) {
         toast.success("Account created! Check your email to activate your account.");
-        router.push('/dashboard') 
+        router.push('/cashbook-assist/dashboard') 
     } else {
         toast.error("Something went wrong creating your account.");
         }
@@ -60,172 +60,157 @@ export const SubscriptionPage = () => {
   }
 
   const features = [
-    "Comprehensive Stock Management",
-    "Effortless Invoice & Quotation Generation",
-    "Detailed Expense Tracking",
-    "Real-time Sales Performance Analytics",
-    "Secure & Accessible Data Anytime"
+    "Unlimited transactions",
+    "Advanced reporting", 
+    "Multiple device sync",
+    "Priority support"
   ];
 
   return (
-    // Outer container for the entire page, providing dark mode styling and centering
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col items-center justify-center p-4 font-sans">
-      <div className="max-w-4xl w-full mx-auto p-6 md:p-8 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700">
+    // Outer container matching landing page styling
+    <div className="font-sans antialiased text-gray-800 dark:text-gray-100 bg-gradient-to-b from-gray-100 to-white dark:from-gray-900 dark:to-gray-800 min-h-screen flex flex-col items-center justify-center p-4">
+      <div className="max-w-5xl w-full mx-auto p-6 md:p-8">
         {/* Header Section */}
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold text-teal-600 dark:text-teal-400 mb-2">
-            Thank you for choosing Book Assist!
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            Thank you for choosing Cashbook Assist!
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400">
-            You need an active subscription to access the Book Assist features.
+            You need an active subscription to access the Cashbook Assist features.
             <br />
             Please select a plan below to continue.
           </p>
         </div>
 
-        {/* Plan Selection Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+        {/* Plan Selection Section - matching landing page grid */}
+        <div className="grid sm:grid-cols-2 gap-6 mb-10">
           {/* Monthly Plan Card */}
           <div
             className={`
-              relative p-6 rounded-lg shadow-lg cursor-pointer transition-all duration-300 ease-in-out
+              bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-md border cursor-pointer transition duration-300 hover:shadow-xl flex flex-col justify-between
               ${selectedPlan === 'monthly'
-                ? 'bg-teal-50 dark:bg-teal-900 ring-2 ring-teal-500 dark:ring-teal-400'
-                : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
+                ? 'border-2 border-cyan-500 dark:border-cyan-400'
+                : 'border-gray-200 dark:border-gray-700'
               }
-              border border-gray-200 dark:border-gray-700
             `}
             onClick={() => setSelectedPlan('monthly')}
           >
-            {selectedPlan === 'monthly' && (
-              <span className="absolute top-3 right-3 text-teal-600 dark:text-teal-400">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </span>
-            )}
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Monthly Plan</h3>
-              <p className="text-gray-500 dark:text-gray-400">Ideal for flexible management</p>
-              <div className="mt-4">
-                <span className="text-5xl font-extrabold text-emerald-600 dark:text-emerald-400">$4.99</span>
-                <span className="text-xl font-medium text-gray-600 dark:text-gray-300">/month</span>
+            <div>
+              <h3 className="text-2xl font-semibold mb-2 text-gray-900 dark:text-white">Cashbook Assist Monthly</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">Full access to all features.</p>
+              <div className="text-5xl font-bold text-cyan-700 dark:text-cyan-400 mb-2">$4.99</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Billed monthly</p>
+
+              <ul className="space-y-3 mb-6">
+                {features.map((feature, index) => (
+                  <li key={index} className="flex items-center text-gray-700 dark:text-gray-300">
+                    <FaCheck className="text-cyan-600 dark:text-cyan-400 mr-2" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="text-center mb-6">
+                <p className="text-lg font-semibold text-cyan-600 dark:text-cyan-400 mb-2">
+                  <span className="bg-cyan-100 dark:bg-cyan-900 px-3 py-1 rounded-full">
+                    Enjoy a 1-Week Free Trial!
+                  </span>
+                </p>
               </div>
             </div>
-            <ul className="space-y-3 mb-8">
-              {features.map((feature, index) => (
-                <li key={index} className="flex items-center text-gray-700 dark:text-gray-200">
-                  <CheckIcon className="w-5 h-5 text-emerald-500 mr-2 flex-shrink-0" />
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="text-center mb-6">
-              <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400 mb-2">
-                <span className="bg-emerald-100 dark:bg-emerald-900 px-3 py-1 rounded-full">
-                  Enjoy a 1-Week Free Trial!
-                </span>
-              </p>
-            </div>
-
           </div>
 
-          {/* Annually Plan Card */}
+          {/* Annual Plan Card */}
           <div
             className={`
-              relative p-6 rounded-lg shadow-lg cursor-pointer transition-all duration-300 ease-in-out
+              bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-md border cursor-pointer transition duration-300 hover:shadow-xl flex flex-col justify-between relative
               ${selectedPlan === 'annually'
-                ? 'bg-teal-50 dark:bg-teal-900 ring-2 ring-teal-500 dark:ring-teal-400'
-                : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
+                ? 'border-2 border-cyan-500 dark:border-cyan-400'
+                : 'border-2 border-cyan-500 dark:border-cyan-400'
               }
-              border border-gray-200 dark:border-gray-700
             `}
-            onClick={() => setSelectedPlan('annual')}
+            onClick={() => setSelectedPlan('annually')}
           >
-            {selectedPlan === 'annual' && (
-              <span className="absolute top-3 right-3 text-teal-600 dark:text-teal-400">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </span>
-            )}
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Annual Plan</h3>
-              <p className="text-gray-500 dark:text-gray-400">Best value for complete sales control</p>
-              <div className="mt-4">
-                <span className="text-5xl font-extrabold text-emerald-600 dark:text-emerald-400">$49.99</span>
-                <span className="text-xl font-medium text-gray-600 dark:text-gray-300">/year</span>
-              </div>
-            </div>
-            <ul className="space-y-3 mb-8">
-              {features.map((feature, index) => (
-                <li key={index} className="flex items-center text-gray-700 dark:text-gray-200">
-                  <CheckIcon className="w-5 h-5 text-emerald-500 mr-2 flex-shrink-0" />
-                  <span>{feature}</span>
+            {/* Badge - always visible for annual plan like landing page */}
+            <span className="absolute top-0 right-0 mt-4 mr-4 bg-cyan-600 text-white text-xs px-3 py-1 rounded-full shadow-sm">
+              Best Value
+            </span>
+
+            <div>
+              <h3 className="text-2xl font-semibold mb-2 text-gray-900 dark:text-white">Cashbook Assist Annual</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">Full access to all features.</p>
+              <div className="text-5xl font-bold text-cyan-700 dark:text-cyan-400 mb-2">$49.99</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Billed annually</p>
+
+              <ul className="space-y-3 mb-6">
+                <li className="flex items-center text-gray-700 dark:text-gray-300 font-bold">
+                  <FaCheck className="text-cyan-600 dark:text-cyan-400 mr-2" />
+                  <span>Save 20% compared to monthly</span>
                 </li>
-              ))}
-              <li className="flex items-center text-gray-700 dark:text-gray-200 font-bold">
-                <CheckIcon className="w-5 h-5 text-emerald-500 mr-2 flex-shrink-0" />
-                <span>Save 20% compared to monthly</span>
-              </li>
-            </ul>
-            <div className="text-center mb-6">
-              <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400 mb-2">
-                <span className="bg-emerald-100 dark:bg-emerald-900 px-3 py-1 rounded-full">
-                  Enjoy a 1-Week Free Trial!
-                </span>
-              </p>
+                {features.map((feature, index) => (
+                  <li key={index} className="flex items-center text-gray-700 dark:text-gray-300">
+                    <FaCheck className="text-cyan-600 dark:text-cyan-400 mr-2" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="text-center mb-6">
+                <p className="text-lg font-semibold text-cyan-600 dark:text-cyan-400 mb-2">
+                  <span className="bg-cyan-100 dark:bg-cyan-900 px-3 py-1 rounded-full">
+                    Enjoy a 1-Week Free Trial!
+                  </span>
+                </p>
+              </div>
             </div>
           </div>
         </div>
           {loading && (
-              <div className='w-full'>
-                <span className='text-gray-400 text-base text-center'>Processing....</span>
+              <div className='w-full text-center'>
+                <span className='text-gray-400 text-base'>Processing....</span>
               </div>
               )}
 
         {/* Subscribe Button */}
         {!planExpired && (
-          <div className="text-center">
+          <div className="text-center mb-6">
                 <button
-                    onClick={() => handleSubCreation({data: 'to-be-updated',free_trial: true})}
+                    onClick={() => handleSubCreation({data: "to-be-set",free_trial: true})}
                     disabled={loading}
                     className="
-                    px-8 py-4 bg-teal-600 hover:bg-teal-700 text-white font-bold text-lg rounded-lg
-                    shadow-lg transition-all duration-300 ease-in-out
-                    dark:bg-teal-500 dark:hover:bg-teal-600
-                    focus:outline-none focus:ring-4 focus:ring-teal-300 dark:focus:ring-teal-700
-                    transform hover:scale-105">
-                    Set up payment information for {selectedPlan === 'monthly' ? 'Monthly' : 'Annual'} later
+                    w-full max-w-md py-3 bg-cyan-700 dark:bg-cyan-600 text-white font-bold text-lg rounded-lg
+                    shadow-lg transition-colors duration-300
+                    hover:bg-cyan-800 dark:hover:bg-cyan-500
+                    focus:outline-none focus:ring-4 focus:ring-cyan-300 dark:focus:ring-cyan-700
+                    disabled:opacity-50 disabled:cursor-not-allowed">
+                    Start Free Trial - {selectedPlan === 'monthly' ? 'Monthly' : 'Annual'} Plan
                 </button>
             </div>
           )}
-            <div className="mt-3 m-auto max-w-md">
-            <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID, vault: true, intent: "subscription" }}>
+            <div className="max-w-md mx-auto">
+            <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '', vault: true, intent: "subscription" }}>
                 <PayPalButtons
                 style={{ layout: "vertical" }}
                 createSubscription={(data, actions) => {
                     return actions.subscription.create({
-                        plan_id: selectedPlan === 'annually' ? process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID_ANNUAL : process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID,
+                        plan_id: selectedPlan === 'annually' ? process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID_ANNUAL || '' : process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID || '',
                     });
                 }}
-                onApprove={async (data, actions) => {
-                  handleSubCreation({data: data.id, free_trial: false, updateSub: planExpired});  
+                onApprove={async (data) => {
+                  handleSubCreation({data: data.subscriptionID || null, free_trial: false, updateSub: planExpired});  
                 }}
                 />
             </PayPalScriptProvider>
             </div>
             </div>
             
-        <div className="fixed bottom-6 right-6 z-50 hidden sm:block flex-row gap-5">
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+          className="flex items-center gap-2 px-3 py-2 font-medium text-gray-700 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-300"
         >
           <svg
-            className="fill-gray-500 group-hover:fill-gray-700 dark:group-hover:fill-gray-300"
-            width="24"
-            height="24"
+            className="fill-current w-5 h-5"
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"

@@ -5,26 +5,23 @@ import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/components/Label";
 import Input from "@/components/form/components/input/InputField";
-import Select from "@/components/form/components/Select";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { createAccountEntryCashbook} from "@/redux/api/thunks/accounts/post";
 import { Account } from "@/components/tables/accounts";
 import { fetchCashbookAccountsThunk } from "@/redux/api/thunks/accounts/fetch";
-import { currencyList } from "@/lib/data/currencyList";
 import { useRouter } from "next/navigation";
+import TextArea from "@/components/form/components/input/TextArea";
 
 export function CashbookCompanyQuickEntryForm() {
   const unique_id = localStorage.getItem('unique_id');
   const router = useRouter()
   const { isOpen, openModal, closeModal } = useModal();
   const dispatch =  useDispatch()
-  const { loading, accounts } = useSelector((state: any) => state.accounts);
+  const {  accounts } = useSelector((state: any) => state.accounts);
   const [name, setName] = React.useState("");
   const [description, setAccountDescription] = React.useState("");
   const [address, setAddress] = React.useState("");
-  const [currency, setCurrency] = React.useState("");
-  const [currencySymbol, setCurrencySymbol] = React.useState("");
 
   React.useEffect(() => {
     dispatch(fetchCashbookAccountsThunk(unique_id));
@@ -44,11 +41,9 @@ export function CashbookCompanyQuickEntryForm() {
 
     const newCompany = {
       name,
-      which_key: unique_id,
       description,
       address,
-      currency,
-      currency_symbol: currencySymbol,
+      which_key: unique_id,
     };
 
 
@@ -60,7 +55,7 @@ export function CashbookCompanyQuickEntryForm() {
           duration: 5000,
         });
         dispatch(fetchCashbookAccountsThunk(unique_id));
-        router.replace('/cashbook-assist/dashboard')
+        router.replace('/cashbook-assist/cashbooks')
       }
     } catch (error) {
       console.error("Error creating company:", error);
@@ -92,7 +87,7 @@ export function CashbookCompanyQuickEntryForm() {
                     Company Information
                 </h5>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                <div className="grid grid-cols-1">
                     <div>
                     <Label>Company Name</Label>
                     <Input
@@ -101,43 +96,25 @@ export function CashbookCompanyQuickEntryForm() {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                     />
-                    </div>
-                    <div>
+                  </div>
+
+                <div className="grid grid-cols-1">
                     <Label>Address (optional)</Label>
-                    <Input
-                        type="text"
+                    <TextArea
                         placeholder="Enter your business address(optional)"
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
                     />
                     </div>
 
-                <div>
+                <div className="grid grid-cols-1">
                     <Label>Description (optional)</Label>
-                    <Input
-                        type="text"
+                    <TextArea
                         placeholder="Description or a tagline(optional)"
                         value={description}
                         onChange={(e) => setAccountDescription(e.target.value)}
                     />
                     </div>
-
-                    <div>
-                        <Label>Select base currency</Label>
-                        <Select
-                            placeholder="Select Currency"
-                            searchable
-                            options={currencyList.map(item => ({
-                            value: item.code, // could also pass item or JSON.stringify(item) if you want full object
-                            label: `${item.currency} (${item.symbol})`,
-                            }))}
-                            onChange={(selected) => {
-                            const selectedCurrency = currencyList.find(c => c.code === selected);
-                            setCurrency(selectedCurrency.code);
-                            setCurrencySymbol(selectedCurrency.symbol);
-                            }}
-                        />
-                        </div>
                     </div>
                 </div>
             </div>

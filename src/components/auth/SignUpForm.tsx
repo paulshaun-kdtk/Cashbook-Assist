@@ -132,7 +132,7 @@ async function handleUsernameCheck() {
   useEffect(() => {
     console.log("Authenticated:", authenticated);
     if (authenticated) {
-      router.replace("/dashboard");
+      router.replace("/cashbook-assist/dashboard");
     }
   }, [authenticated, router]);
 

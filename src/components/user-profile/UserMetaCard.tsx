@@ -76,7 +76,7 @@ const handleSave = async () => {
     localStorage.setItem("remote_user", JSON.stringify(userCreationResponse));
     localStorage.setItem("unique_id", JSON.stringify(userCreationResponse.which_key));
     window.dispatchEvent(new Event("remote_user_updated"));
-    router.replace('/dashboard');
+    router.replace('/cashbook-assist/dashboard');
   }
   else {
     console.error("Failed to save user details:", userCreationResponse);

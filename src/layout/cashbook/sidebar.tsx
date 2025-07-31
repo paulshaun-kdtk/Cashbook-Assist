@@ -63,7 +63,7 @@ const CashbookSidebar: React.FC = () => {
             !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
           }`}
         >
-          <Link href="/dashboard">
+          <Link href="/cashbook-assist/dashboard">
             {isExpanded || isHovered || isMobileOpen ? (
               <>
                 <Image

@@ -18,10 +18,12 @@ export const FreeTrialBannerCashbook = () => {
     const [remoteExists, setRemoteExists] = useState(() => !!localStorage.getItem("remote_user"));
     const [showRemote, setShowRemote] = useState(false);
     const [showBanner, setShowBanner] = useState(false);
+    const [subscriptionCheckComplete, setSubscriptionCheckComplete] = useState(false);
 
 useEffect(() => {
   const checkRemoteUser = async () => {
     try {
+      // @ts-expect-error - Type assertion for dispatch call
       const result = await dispatch(confirmRemoteUserThunk(user.email)).unwrap();
       return result;
     } catch (error) {
@@ -56,85 +58,98 @@ useEffect(() => {
   };
 }, [dispatch, user]);
 
-
   useEffect(() => {
-    const hasMain = other_subscriptions.some((item: Subscription) => item.subscription_system === "main");
-    const hasCashbook = other_subscriptions.some((item: Subscription) => item.subscription_system === "cashbook");
-    const hasInvoice = other_subscriptions.some((item: Subscription) => item.subscription_system === "invoicing");
-
-    if (hasCashbook) {
+    if (!subscriptionCheckComplete || !other_subscriptions) {
       return;
     }
 
-    if (hasMain && !hasCashbook) {
-      toast.error("Looks like you do not have a book assist or an invoice assist account, please sign up to get started.", {
-        duration: 7000
-      });
-      router.replace("/cashbook-assist/dashboard");
-    } else if (hasInvoice && !hasCashbook) {
-      toast.error("Looks like you do not have a book assist or a cashbook assist account, please sign up to get started.", {
-        duration: 7000
-      });
-      router.replace("/invoice-assist/dashboard");
+    const hasCashbook = other_subscriptions.some((item: Subscription) => item.subscription_system === "cashbook");
+ 
+    if (hasCashbook) {
+      toast.success("Welcome back.");
+      return;
+    }
+    
+    if (!hasCashbook && !is_on_free_trial) {
+      toast.error("You do not have a Cashbook subscription. Please upgrade to access Cashbook features.");
+      router.replace("/no-sub?email=" + user.email + "&message=" + encodeURIComponent("No subscription found"));
     } else {
-      toast.success("Welcome back.")
+      console.log("User has free trial access to cashbook features");
     }
 
     console.log("other_subscriptions", other_subscriptions);
-  }, [other_subscriptions, router, subscription]);
+  }, [other_subscriptions, router, user, subscriptionCheckComplete, is_on_free_trial]);
 
     useEffect(() => {
         const checkSubscription = async () => {
             if (user) {
-                const response = await dispatch(confirmHasSubscriptionThunk({email: user.email,  which_key: "main"})).unwrap() 
-                if (!response) {
-                    toast.error("Something went wrong with your subscription validation, please try again. Contact support if the issue persist", {
-                      duration: 7000
-                    });
-                    router.replace("/")
-                  }
+                try {
+                    const response = await dispatch(confirmHasSubscriptionThunk({email: user.email,  which_key: "main"})).unwrap();
+                    if (!response) {
+                        toast.error("Something went wrong with your subscription validation, please try again. Contact support if the issue persist", {
+                          duration: 7000
+                        });
+                        router.replace("/");
+                    }
+                } catch (error) {
+                    console.error("Subscription check failed:", error);
+                    toast.error("Failed to validate subscription. Please try again.");
+                    router.replace("/");
+                } finally {
+                    setSubscriptionCheckComplete(true);
                 }
+            }
         }
         checkSubscription();
     }, [dispatch, user, router]);
 
     return (
     <>
-      {!remoteExists && !showRemote && (
-        <Link href={"/profile?no-remote=true"} className="w-full">
-          <Button
-            onClick={() => setShowRemote(true)}
-            variant="link_error"
-            className="w-full"
-            >
-            Confirm user details
-          </Button>
-        </Link>
+      {!subscriptionCheckComplete && (
+        <div className="w-full p-2 text-center text-gray-500">
+          Validating subscription...
+        </div>
       )}
 
-    {is_on_free_trial && showBanner ? (
-        <Alert
-          variant="warning"
-          title="Free Trial Mode"
-          message={`You are currently on a free trial. ${time_remaining} days remaining.`}
-          linkHref="/no-sub?type=free_trial"
-          linkText="Upgrade Now"
-          dismissable={true}
-          dismissText="Dismiss"
-          dismissAction={() => setShowBanner(false)}
-          showLink
-          />
-      ) : is_on_free_trial ? (
-          <Button
-          onClick={() => setShowBanner(true)}
-          variant="link_warning"
-          className="w-full"
-          >
-          Free Trial Mode
-          </Button>
-    ) : (
-      <></>
-    )}
+      {subscriptionCheckComplete && (
+        <>
+          {!remoteExists && !showRemote && (
+            <Link href={"/profile?no-remote=true"} className="w-full">
+              <Button
+                onClick={() => setShowRemote(true)}
+                variant="link_error"
+                className="w-full"
+                >
+                Confirm user details
+              </Button>
+            </Link>
+          )}
+
+        {is_on_free_trial && showBanner ? (
+            <Alert
+              variant="warning"
+              title="Free Trial Mode"
+              message={`You are currently on a free trial. ${time_remaining} days remaining.`}
+              linkHref="/no-sub?type=free_trial"
+              linkText="Upgrade Now"
+              dismissable={true}
+              dismissText="Dismiss"
+              dismissAction={() => setShowBanner(false)}
+              showLink
+              />
+          ) : is_on_free_trial ? (
+              <Button
+              onClick={() => setShowBanner(true)}
+              variant="link_warning"
+              className="w-full"
+              >
+              Free Trial Mode
+              </Button>
+        ) : (
+          <></>
+        )}
+        </>
+      )}
 </>
     );
 }

@@ -1,40 +1,40 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchCategoriesThunk } from "../thunks/category/fetch"
-import { createCategoryThunk } from "../thunks/category/post"
+import { fetchCashbookThunk } from "../thunks/cashbooks/fetch";
+import { createCashbookThunk } from "../thunks/cashbooks/post";
 
-const categoriesSlice = createSlice({
-  name: "categories",
+const cashbookSlice = createSlice({
+  name: "cashbooks",
   initialState: {
-    categories: [],
+    cashbooks: [],
     loading: false,
     error: null,
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchCategoriesThunk.pending, (state) => {
+      .addCase(fetchCashbookThunk.pending, (state) => {
         state.loading = true;
       })
-      .addCase(fetchCategoriesThunk.fulfilled, (state, action) => {
+      .addCase(fetchCashbookThunk.fulfilled, (state, action) => {
         state.loading = false;
-        state.categories = action.payload;
+        state.cashbooks = action.payload;
       })
-      .addCase(fetchCategoriesThunk.rejected, (state, action) => {
+      .addCase(fetchCashbookThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-      .addCase(createCategoryThunk.pending, (state) => {
+      .addCase(createCashbookThunk.pending, (state) => {
         state.loading = true;
       })
-      .addCase(createCategoryThunk.fulfilled, (state, action) => {
+      .addCase(createCashbookThunk.fulfilled, (state, action) => {
         state.loading = false;
-        state.categories.push(action.payload);
+        state.cashbooks.push(action.payload);
       })
-      .addCase(createCategoryThunk.rejected, (state, action) => {
+      .addCase(createCashbookThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
   },
 });
 
-export default categoriesSlice.reducer;
+export default cashbookSlice.reducer;

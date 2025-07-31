@@ -5,15 +5,11 @@ import { useDeleteAccount } from '@/hooks/useDeleteAccount';
 import toast from 'react-hot-toast';
 
 interface DeleteAccountProps {
-  userEmail?: string;
-  userId?: string;
   className?: string;
   onAccountDeleted?: () => void;
 }
 
 const DeleteAccountComponent: React.FC<DeleteAccountProps> = ({
-  userEmail,
-  userId,
   className = "",
   onAccountDeleted,
 }) => {
@@ -30,7 +26,16 @@ const DeleteAccountComponent: React.FC<DeleteAccountProps> = ({
   } = useDeleteAccount();
 
   const handlePreview = async () => {
-    const preview = await previewAccountDeletion(userEmail, userId);
+    // Check if unique_id exists in localStorage
+    const unique_id = localStorage.getItem('unique_id');
+    
+    if (!unique_id) {
+      toast.error('No unique_id found in localStorage. Please ensure you are logged in.');
+      return;
+    }
+    
+    // Don't pass userEmail and userId, let the hook use unique_id from localStorage
+    const preview = await previewAccountDeletion();
     if (preview) {
       setShowPreview(true);
     }
@@ -42,7 +47,8 @@ const DeleteAccountComponent: React.FC<DeleteAccountProps> = ({
       return;
     }
 
-    const result = await deleteAccount(userEmail, userId);
+    // Don't pass userEmail and userId, let the hook use unique_id from localStorage
+    const result = await deleteAccount();
     if (result) {
       setShowConfirmation(false);
       setShowPreview(false);
@@ -69,11 +75,8 @@ const DeleteAccountComponent: React.FC<DeleteAccountProps> = ({
         <ul className="mb-4 list-disc list-inside text-sm text-red-700 dark:text-red-300 space-y-1">
           <li>Your user profile and settings</li>
           <li>All your income and expense records</li>
-          <li>Your customers and sales data</li>
-          <li>Stock items and inventory</li>
-          <li>Credits and debts records</li>
           <li>Your subscription data</li>
-          <li>Your Appwrite authentication account</li>
+          <li>Your cashbook assist authentication account</li>
         </ul>
         
         <div className="flex flex-wrap gap-3">

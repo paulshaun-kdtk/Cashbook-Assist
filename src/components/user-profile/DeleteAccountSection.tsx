@@ -13,8 +13,7 @@ const DeleteAccountSection: React.FC<DeleteAccountSectionProps> = ({
   userId,
 }) => {
   const handleAccountDeleted = () => {
-    // Redirect user to homepage or login page after successful deletion
-    window.location.href = '/';
+    window.location.href = '/signin';
   };
 
   return (

@@ -544,7 +544,7 @@ export default function CashbookLanding() {
               Simple, transparent pricing
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto opacity-0 translate-y-4 animate-fade-in-up animation-delay-400">
-              Choose the perfect plan for your business. No hidden fees, no surprises.
+              Choose the perfect plan for your business. No hidden fees, no surprises. Enjoy a 7 day free trial on all plans (canceallable anytime).
             </p>
           </div>
           

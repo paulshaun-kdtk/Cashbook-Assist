@@ -8,7 +8,7 @@ const useGoBack = () => {
     if (window.history.length > 1) {
       router.back(); // Navigate to the previous route
     } else {
-      router.push("/dashboard"); // Redirect to home if no history exists
+      router.push("/cashbook-assist/dashboard"); // Redirect to home if no history exists
     }
   };
 

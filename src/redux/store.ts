@@ -9,6 +9,7 @@ import userSubSlice from './api/slices/usersubSlice';
 import selectedSourceSlice from "./api/slices/selectedSourceSlice"
 import exchangeRateSlice from "./api/slices/exchangeRateSlice"
 import categoriesSlice from "./api/slices/categorySlice"
+import cashbookSlice from "./api/slices/cashbookSlice";
 
 const rootReducer = combineReducers({
   auth: authSlice,
@@ -20,7 +21,8 @@ const rootReducer = combineReducers({
   subscription: userSubSlice,
   rates: exchangeRateSlice,
   selectedSource: selectedSourceSlice,
-  categories: categoriesSlice
+  categories: categoriesSlice,
+  cashbooks: cashbookSlice,
 });
 
 const store = configureStore({

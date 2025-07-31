@@ -23,7 +23,7 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, previousPage="",
           <li>
             <Link
               className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400"
-              href="/dashboard"
+              href="/cashbook-assist/dashboard"
             >
               Home
               <svg

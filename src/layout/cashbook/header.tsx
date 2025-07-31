@@ -102,7 +102,7 @@ const CashbookHeader: React.FC = () => {
             {/* Cross Icon */}
           </button>
 
-          <Link href="/dashboard" className="lg:hidden">
+          <Link href="/cashbook-assist/dashboard" className="lg:hidden">
             <Image
               width={32}
               height={32}

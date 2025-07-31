@@ -86,11 +86,11 @@ function CashbookClient() {
 
 const rawTransactions = [
   ...income
-    .filter((item) => !incomeSource || item.which_company === incomeSource.$id)
+    .filter((item) => !incomeSource || item.which_cashbook === incomeSource.$id)
     .map((item) => ({
       $id: item.$id,
       $sequence: item.$sequence,
-      which_company: item.which_company,
+      which_cashbook: item.which_cashbook,
       date: item.createdAt,
       description: item.description || "Income",
       memo: item.memo || "",
@@ -102,7 +102,7 @@ const rawTransactions = [
     .filter((item) => {
       const category = (item.category || "").toLowerCase().replace(/_/g, " ");
       return (
-        (!incomeSource || item.which_company === incomeSource.$id) &&
+        (!incomeSource || item.which_cashbook === incomeSource.$id) &&
         !category.includes("cost of sales") &&
         !category.includes("cost of goods sold")
       );
@@ -110,7 +110,7 @@ const rawTransactions = [
     .map((item) => ({
       $id: item.$id,
       $sequence: item.$sequence,
-      which_company: item.which_company,
+      which_cashbook: item.which_cashbook,
       date: item.createdAt,
       description: item.description || "Expense",
       memo: item.memo || "",
@@ -174,8 +174,9 @@ const rawTransactions = [
 
   const addTransaction = async () => {
     if (!newTransaction.description || !newTransaction.amount) return;
+   
     if (!incomeSource?.$id) {
-      toast.error("Please specify a Company in your header")
+      toast.error("Please specify a Cashbook in your header")
       return
     }
     
@@ -190,7 +191,7 @@ const rawTransactions = [
       createdAt: new Date(newTransaction.createdAt).toISOString(),
       amount: amount,
       category: newTransaction.category,
-      which_company: incomeSource.$id,
+      which_cashbook: incomeSource.$id,
       which_key: unique_id,
     };
 
@@ -293,7 +294,7 @@ const rawTransactions = [
       toast.dismiss(loadingToast);
       return;
     }
-    exportToExcel(filteredTransactions, `${incomeSource?.name} Cashbook Report ${formatDateWordsShort(new Date().toLocaleDateString())}`, ['id', '$id', '$sequence', 'which_company']);
+    exportToExcel(filteredTransactions, `${incomeSource?.name} Cashbook Report ${formatDateWordsShort(new Date().toLocaleDateString())}`, ['id', '$id', '$sequence', 'which_cashbook']);
   } catch (error) {
     console.error("Error generating report:", error);
     toast.error("Error generating report");
@@ -447,7 +448,7 @@ const rawTransactions = [
         const success = item.type === "expense" ? await dispatch(deleteExpenseEntryCashbook({documentId: item.$id})).unwrap() : await dispatch(deleteIncomeEntryCashbook({documentId: item.$id})).unwrap()
         if (!success) {
           console.error(success)
-          toast.error("Failed to delete company entry");
+          toast.error("Failed to delete Transaction entry");
           return
         }
 
@@ -467,7 +468,7 @@ const rawTransactions = [
       const success = item.type === "expense" ? await dispatch(updateExpenseItemThunkCashbook({documentId: item.$id ,data: editingItem})).unwrap() : await dispatch(updateIncomeItemThunkCashbook({documentId: item.$id, data: editingItem})).unwrap()
       if (!success) {
         console.error(success)
-        toast.error("Failed to update company entry");
+        toast.error("Failed to update Cashbook entry");
         toast.dismiss(loadingToast);
         return
       }
@@ -783,7 +784,7 @@ const companyNameMap = React.useMemo(() => {
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
-                  Company
+                  Cashbook
                 </TableCell>
                 <TableCell
                   isHeader
@@ -875,7 +876,7 @@ const companyNameMap = React.useMemo(() => {
           </TableCell>
 
           <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-            {companyNameMap.get(item.which_company) || ""}
+            {companyNameMap.get(item.which_cashbook) || ""}
           </TableCell>
 
               <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">

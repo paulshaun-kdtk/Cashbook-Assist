@@ -17,6 +17,9 @@ import Button from "@/components/ui/button/Button";
 import { MdDelete } from "react-icons/md";
 import toast from "react-hot-toast";
 import { deleteAccountEntryCashbook } from "@/redux/api/thunks/accounts/post";
+import { RootState } from "@/redux/store";
+import { fetchCashbookThunk } from "@/redux/api/thunks/cashbooks/fetch";
+import { deleteCashbookThunk } from "@/redux/api/thunks/cashbooks/post";
 
 export interface Account {
     $id: string;
@@ -32,9 +35,9 @@ export interface Account {
     id_on_device: string;
 }
 
-export default function AccountsTableCashbook() {
+export default function CashbooksTable() {
     const dispatch = useDispatch()
-    const {accounts, error, loading} = useSelector((state) => state.accounts)
+    const {cashbooks, error, loading} = useSelector((state: RootState) => state.cashbooks)
     const [uniqueId, setUniqueId] = React.useState<string | null>(null);
     const [currentPage, setCurrentPage] = React.useState(1);
     const itemsPerPage = 10;
@@ -48,21 +51,21 @@ export default function AccountsTableCashbook() {
 
     useEffect(() => {
         if (uniqueId) {
-          dispatch(fetchCashbookAccountsThunk(uniqueId));
+          dispatch(fetchCashbookThunk(uniqueId));
         }
       }, [dispatch, uniqueId]);
 
           const handleDeleteAccount = async (account: Account) => {
               const loadingToast = toast.loading("Deleting entry...");
               try {
-                const success = await dispatch(deleteAccountEntryCashbook({documentId: account.$id})).unwrap()
+                const success = await dispatch(deleteCashbookThunk({documentId: account.$id})).unwrap()
                 if (!success) {
                   console.error(success)
                   toast.error("Failed to delete company entry");
                   return
                 }
                 toast.success("Company entry deleted successfully.", {duration: 5000});
-                await dispatch(fetchCashbookAccountsThunk(uniqueId));
+                await dispatch(fetchCashbookThunk(uniqueId));
               } catch (error) {
                 console.error("Error deleting company entry:", error);
                 toast.error("Error deleting company entry");
@@ -72,8 +75,8 @@ export default function AccountsTableCashbook() {
       
 const startIndex = (currentPage - 1) * itemsPerPage;
 const endIndex = startIndex + itemsPerPage;
-const paginatedData:Account[] = accounts.slice(startIndex, endIndex)
-const totalPages = Math.ceil(accounts.length / itemsPerPage);
+const paginatedData:Account[] = cashbooks.slice(startIndex, endIndex)
+const totalPages = Math.ceil(cashbooks.length / itemsPerPage);
 
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -93,7 +96,7 @@ const totalPages = Math.ceil(accounts.length / itemsPerPage);
                       size="sm"
                       color={"error"}
                       > 
-                      <span>Eror fetching companies - {error}</span>
+                      <span>Error fetching cashbooks - {error}</span>
                      </Badge> 
             </div>
         )}
@@ -114,13 +117,7 @@ const totalPages = Math.ceil(accounts.length / itemsPerPage);
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
-                  Company Name
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Address
+                  Cashbook Name
                 </TableCell>
                 <TableCell
                   isHeader
@@ -164,9 +161,6 @@ const totalPages = Math.ceil(accounts.length / itemsPerPage);
                             </span>
                         </div>
                     </div>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                    {account?.address}
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                     {formatCurrency(account?.total_income)}
