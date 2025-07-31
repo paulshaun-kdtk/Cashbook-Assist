@@ -20,7 +20,7 @@ const plans: PlanOption[] = [
   {
     id: 'monthly',
     name: 'Cashbook Assist Monthly',
-    price: '$2.99',
+    price: '$3.99',
     period: '/month',
     description: 'Perfect for individuals and small businesses.',
     features: [
@@ -33,7 +33,7 @@ const plans: PlanOption[] = [
   {
     id: 'annual',
     name: 'Cashbook Assist Annual',
-    price: '$29.99',
+    price: '$39.99',
     period: '/year',
     description: 'Perfect for individuals and small businesses.',
     features: [

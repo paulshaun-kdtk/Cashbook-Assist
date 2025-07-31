@@ -3,12 +3,12 @@ import { databases } from "@/redux/appwrite/config";
 import { ID } from "appwrite";
 
 export const createAccountEntry = createAsyncThunk(
-  "income_source/account/create_entry",
+  "companies/create_entry",
   async ({ data }, { rejectWithValue }) => {
     try {
       const response = await databases.createDocument(
         process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID, // database ID
-        "6793fadd0018b09a485e", // collection ID
+        "6881462a0014df352b12", // collection ID
         ID.unique(), // unique ID
         data,
       );
@@ -21,12 +21,12 @@ export const createAccountEntry = createAsyncThunk(
 );
 
 export const deleteAccountEntry = createAsyncThunk(
-  "income_source/account/delete_entry",
+  "companies/delete_entry",
   async ({ documentId }, { rejectWithValue }) => {
     try {
       const response = await databases.deleteDocument(
         process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID, // database ID
-        "6793fadd0018b09a485e", // collection ID
+        "6881462a0014df352b12", // collection ID
         documentId, // document ID
       );
       return response;

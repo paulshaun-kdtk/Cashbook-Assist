@@ -2,7 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { databases, query } from "../../../appwrite/config";
 
 export const fetchAccountsThunk = createAsyncThunk(
-  "accounts/fetch_items",
+  "companies/fetch_items",
   async (which_key, { rejectWithValue }) => {
     try {
       const allDocuments = [];
@@ -23,7 +23,7 @@ export const fetchAccountsThunk = createAsyncThunk(
 
         const response = await databases.listDocuments(
           process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID,
-          "6793fadd0018b09a485e",
+          "6881462a0014df352b12",
           queries,
         );
 
