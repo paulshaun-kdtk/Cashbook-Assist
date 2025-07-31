@@ -7,9 +7,38 @@ const CheckCircle = ({ size, className }: { size?: number; className?: string })
 const DollarSign = ({ size, className }: { size?: number; className?: string }) => <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`lucide lucide-dollar-sign ${className || ''}`}><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>;
 const BarChart = ({ size, className }: { size?: number; className?: string }) => <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`lucide lucide-bar-chart ${className || ''}`}><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg>;
 const CreditCard = ({ size, className }: { size?: number; className?: string }) => <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`lucide lucide-credit-card ${className || ''}`}><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>;
-const ShieldCheck = ({ size, className }: { size?: number; className?: string }) => <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`lucide lucide-shield-check ${className || ''}`}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>;
 const Zap = ({ size, className }: { size?: number; className?: string }) => <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`lucide lucide-zap ${className || ''}`}><path d="M4 14a1 1 0 0 1-.37-1.92L17 3l-5 10h5.5l-13 9Z"/></svg>;
 
+// Social Media Icons
+const YouTubeIcon = ({ size, className }: { size?: number; className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+  </svg>
+);
+
+const FacebookIcon = ({ size, className }: { size?: number; className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+  </svg>
+);
+
+const TikTokIcon = ({ size, className }: { size?: number; className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>
+  </svg>
+);
+
+const InstagramIcon = ({ size, className }: { size?: number; className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+  </svg>
+);
+
+const XIcon = ({ size, className }: { size?: number; className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/>
+  </svg>
+);
 
 export default function CashbookLanding() {
   const heroRef = useRef<HTMLElement>(null);
@@ -168,17 +197,17 @@ export default function CashbookLanding() {
                   number: "01",
                   icon: <DollarSign size={32} />,
                   title: "Smart Transaction Logging",
-                  description: "Effortlessly record income and expenses with intelligent categorization and automated suggestions. Our AI-powered system learns from your patterns to make data entry faster and more accurate.",
+                  description: "Effortlessly record income and expenses with intelligent categorization and automated suggestions.",
                   gradient: "from-emerald-400 to-green-500",
-                  features: ["Auto-categorization", "Receipt scanning", "Bulk import", "Smart suggestions"]
+                  features: ["Auto-categorization", "Automated Recurring Entries", "Smart Notifications", "Bulk import"]
                 },
                 {
                   number: "02",
                   icon: <BarChart size={32} />,
-                  title: "Advanced Analytics",
+                  title: "Analytics",
                   description: "Generate comprehensive reports with interactive charts and real-time financial insights. Transform your data into actionable business intelligence.",
                   gradient: "from-blue-400 to-cyan-500",
-                  features: ["Real-time dashboards", "Custom reports", "Trend analysis", "Export options"]
+                  features: ["Real-time dashboards", "Custom reports", "Export options"]
                 },
                 {
                   number: "03",
@@ -186,7 +215,7 @@ export default function CashbookLanding() {
                   title: "Multi-Currency Support",
                   description: "Handle transactions in multiple currencies with automatic conversion and exchange rate tracking. Perfect for global businesses and international transactions.",
                   gradient: "from-purple-400 to-indigo-500",
-                  features: ["Auto conversion", "Live exchange rates", "Currency analytics", "Global support"]
+                  features: ["Auto conversion", "Live exchange rates", "Global support"]
                 }
               ].map((feature, index) => (
                 <div key={index} className={`flex flex-col lg:flex-row items-start gap-12 opacity-0 translate-y-8 animate-fade-in-up`} style={{animationDelay: `${600 + index * 200}ms`}}>
@@ -322,7 +351,7 @@ export default function CashbookLanding() {
             </div>
 
             {/* Video Benefits */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
               <div className="text-center">
                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-xl flex items-center justify-center mx-auto mb-4">
                   <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -341,7 +370,7 @@ export default function CashbookLanding() {
                 <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Real-time Insights</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">See your financial health with live dashboards and analytics</p>
               </div>
-              <div className="text-center">
+              {/* <div className="text-center">
                 <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-xl flex items-center justify-center mx-auto mb-4">
                   <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"/>
@@ -349,7 +378,7 @@ export default function CashbookLanding() {
                 </div>
                 <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Smart Automation</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Let AI handle categorization and expense tracking automatically</p>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -374,26 +403,26 @@ export default function CashbookLanding() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
-                name: "Sarah Chen",
+                name: "Sarah Chigukwa",
                 role: "Small Business Owner",
                 company: "Bloom Café",
-                content: "Cashbook Assist has completely transformed how I manage my café's finances. The automatic categorization saves me hours every week, and the insights help me make better business decisions.",
+                content: "Cashbook Assist has completely transformed how I manage my café's finances. The insights help me make better business decisions.",
                 rating: 5,
                 avatar: "SC"
               },
               {
-                name: "Marcus Rodriguez",
+                name: "Michael Rodriguez",
                 role: "Freelance Consultant",
                 company: "Rodriguez Consulting",
-                content: "As a freelancer juggling multiple clients, tracking expenses was a nightmare. Now I can see exactly where my money goes and generate professional reports for tax season.",
+                content: "As a freelancer juggling multiple clients, tracking expenses was a nightmare. Now I can see exactly where my money goes and generate professional reports.",
                 rating: 5,
                 avatar: "MR"
               },
               {
-                name: "Jennifer Park",
+                name: "Tanaka Moyo",
                 role: "Retail Store Manager",
                 company: "Park's Electronics",
-                content: "The multi-currency support is a game-changer for our import business. Real-time exchange rates and automated conversions make international transactions effortless.",
+                content: "I no longer have to use manual cashbooks, and this has helped me remotely monitor my finances.",
                 rating: 5,
                 avatar: "JP"
               }
@@ -443,15 +472,15 @@ export default function CashbookLanding() {
             {[
               {
                 question: "How secure is my financial data?",
-                answer: "We use bank-level encryption (AES-256) to protect your data both in transit and at rest. Our servers are hosted on secure cloud infrastructure with regular security audits and compliance with industry standards."
+                answer: "We use encryption to protect your data both in transit and at rest. Our servers are hosted on secure cloud infrastructure with regular security audits and compliance with industry standards."
               },
               {
                 question: "Can I import data from my existing accounting software?",
-                answer: "Yes! Cashbook Assist supports importing data from popular formats including CSV, Excel, QuickBooks, and many other accounting platforms. Our import wizard makes the process simple and error-free."
+                answer: "Yes! Cashbook Assist supports importing data from popular formats including CSV, Excel, and API protocol. Our import wizard makes the process simple and error-free."
               },
               {
                 question: "Is there a mobile app available?",
-                answer: "Absolutely! Our mobile app is available for both iOS and Android devices. You can track expenses, capture receipts, and view reports on the go with full synchronization across all your devices."
+                answer: "Absolutely! Our mobile app is available for both iOS and Android devices. You can track expenses, income and view reports on the go with full synchronization across all your devices."
               },
               {
                 question: "What kind of support do you provide?",
@@ -460,10 +489,6 @@ export default function CashbookLanding() {
               {
                 question: "Can I cancel my subscription anytime?",
                 answer: "Yes, you can cancel your subscription at any time. There are no long-term contracts or cancellation fees. You'll continue to have access to your account until the end of your billing period."
-              },
-              {
-                question: "Do you offer discounts for nonprofits or students?",
-                answer: "Yes! We offer special pricing for registered nonprofits and educational institutions. Contact our sales team to learn more about available discounts and eligibility requirements."
               }
             ].map((faq, index) => (
               <div key={index} className="bg-gray-50 dark:bg-slate-800 rounded-2xl p-6 hover:shadow-lg transition-all duration-300">
@@ -512,10 +537,10 @@ export default function CashbookLanding() {
               </button>
             </Link>
             <a
-              href="mailto:info@shsoftwares.com?subject=Demo request for Cashbook Assist"
+              href="/how-it-works" // link to how it works page
               className="w-full sm:w-auto px-8 py-4 border-2 border-white text-white font-semibold rounded-xl hover:bg-white hover:text-blue-600 transition-all duration-300 hover:scale-105 hover:-translate-y-1"
             >
-              Schedule Demo
+              How it works
             </a>
           </div>
           
@@ -764,7 +789,55 @@ export default function CashbookLanding() {
               <p className="text-gray-400 text-sm">
                 &copy; 2025 Silverhouse Softwares. All rights reserved.
               </p>
-              <div className="flex items-center space-x-4 mt-4 md:mt-0">
+              <div className="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0">
+                {/* Social Media Links */}
+                <div className="flex items-center space-x-4">
+                  <a
+                    href="https://www.youtube.com/@shsoftwares"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-red-500 transition-colors duration-300 transform hover:scale-110"
+                    aria-label="YouTube"
+                  >
+                    <YouTubeIcon size={20} />
+                  </a>
+                  <a
+                    href="https://www.facebook.com/shsoftwares"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-blue-500 transition-colors duration-300 transform hover:scale-110"
+                    aria-label="Facebook"
+                  >
+                    <FacebookIcon size={20} />
+                  </a>
+                  <a
+                    href="https://www.tiktok.com/@shsoftwares"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-white transition-colors duration-300 transform hover:scale-110"
+                    aria-label="TikTok"
+                  >
+                    <TikTokIcon size={20} />
+                  </a>
+                  <a
+                    href="https://www.instagram.com/shsoftwares"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-pink-500 transition-colors duration-300 transform hover:scale-110"
+                    aria-label="Instagram"
+                  >
+                    <InstagramIcon size={20} />
+                  </a>
+                  <a
+                    href="https://x.com/shsoftwares"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-white transition-colors duration-300 transform hover:scale-110"
+                    aria-label="X (formerly Twitter)"
+                  >
+                    <XIcon size={20} />
+                  </a>
+                </div>
                 <span className="text-gray-400 text-sm">Built with ❤️ for modern businesses</span>
               </div>
             </div>

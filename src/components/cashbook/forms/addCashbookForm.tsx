@@ -156,8 +156,8 @@ export function CashbookQuickEntryForm() {
                 <Button size="sm" variant="outline" onClick={closeModal}>
                 Cancel
                 </Button>
-                <Button size="sm" onClick={handleSave} disabled={loading || !name}>
-                {loading ? "Saving..." : "Save Cashbook"}
+                <Button size="sm" onClick={handleSave} disabled={!name}>
+                    Save Cashbook
                 </Button>
             </div>
             </form>

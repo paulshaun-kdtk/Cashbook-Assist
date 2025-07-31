@@ -64,6 +64,13 @@ export function CashbookCompanyQuickEntryForm() {
     }
   };
 
+  const handleAddressChange = (e) => {
+    setAddress(e);
+  }
+
+  const handleDescriptionChange = (e) => {
+    setAccountDescription(e);
+  }
   return (
     <div>
       <Button onClick={openModal} variant="link_primary">
@@ -103,7 +110,7 @@ export function CashbookCompanyQuickEntryForm() {
                     <TextArea
                         placeholder="Enter your business address(optional)"
                         value={address}
-                        onChange={(e) => setAddress(e.target.value)}
+                        onChange={handleAddressChange}
                     />
                     </div>
 
@@ -112,7 +119,7 @@ export function CashbookCompanyQuickEntryForm() {
                     <TextArea
                         placeholder="Description or a tagline(optional)"
                         value={description}
-                        onChange={(e) => setAccountDescription(e.target.value)}
+                        onChange={handleDescriptionChange}
                     />
                     </div>
                     </div>
