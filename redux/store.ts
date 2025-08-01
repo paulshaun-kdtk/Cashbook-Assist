@@ -1,4 +1,5 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
+import { offlineMiddleware } from './middleware/offlineMiddleware';
 import authSlice from './slices/auth/authSlice';
 import cashbooksSlice from './slices/cashbooks/cashbookSlice';
 import categoriesSlice from './slices/categories/categorySlice';
@@ -17,6 +18,12 @@ const rootReducer = combineReducers({
 
 const store = configureStore({
   reducer: rootReducer,
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
+      },
+    }).concat(offlineMiddleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

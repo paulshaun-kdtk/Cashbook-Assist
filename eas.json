@@ -19,8 +19,8 @@
       "channel": "preview" 
     },
     "production": {
-      "autoIncrement": true
-      
+      "autoIncrement": true,
+      "channel": "production"
     }
   },
   "submit": {
@@ -28,8 +28,6 @@
       "ios": {
           "ascAppId": "6749332227"
         }
-    },
-    "realdevice-ios": {},
-    "realdevice-android": {}
+    }
   }
 }
