@@ -9,6 +9,7 @@ import { TbFileAnalytics, TbReportMoney } from "react-icons/tb";
 import { FaMoneyCheckAlt } from "react-icons/fa";
 import { MdSummarize } from "react-icons/md";
 import PrivateRoute from "@/redux/auth/privateRoute";
+import { FreeTrialBannerCashbook } from "@/components/header/freeTrialBannerCashbook";
 
 const cashbookItems = [
   {
@@ -85,6 +86,9 @@ const CashbookSidebar: React.FC = () => {
               <Image src="/favicon.svg" alt="Logo" width={32} height={32} />
             )}
           </Link>
+          <div className="hidden lg:block">
+            <FreeTrialBannerCashbook />
+          </div>
         </div>
 
         {/* Navigation */}

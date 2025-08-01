@@ -55,7 +55,7 @@ export const selectFilteredIncomeCashbook = createSelector(
   [selectIncome, selectSelectedSource],
   (income, selectedSource) => {
     if (!selectedSource?.$id) return income;
-    return income.filter((item: Income) => item.which_company === selectedSource.$id);
+    return income.filter((item: Income) => item.which_cashbook === selectedSource.$id);
   }
 );
 

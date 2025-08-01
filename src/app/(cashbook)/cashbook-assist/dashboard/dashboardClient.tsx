@@ -24,6 +24,11 @@ import { fetchCategoriesThunk } from "@/redux/api/thunks/category/fetch";
 import { CategoryQuickEntry } from "@/components/cashbook/forms/addCategoryForm";
 
 export type TransactionItem = {
+  $id: string;
+  $createdAt: string;
+  createdAt: string;
+  $updatedAt: string;
+  $sequence: number;
   date: string;
   description: string;
   amount: number;
@@ -529,7 +534,7 @@ const companyNameMap = React.useMemo(() => {
     </div>
   </div>
 
-  <div className="mx-auto px-5 py-6">
+  <div className="mx-autoz py-6">
     {showExportForm && (
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-6 mb-6 shadow">
         <h3 className="text-slate-800 dark:text-slate-100 mb-4 font-semibold">Export PDF Report</h3>
@@ -744,6 +749,8 @@ const companyNameMap = React.useMemo(() => {
       No transactions yet. Add your first transaction to get started!
     </div>
   ) : (
+    <div className="max-w-full overflow-x-auto">
+  <div className="min-w-[1102px]">
     <Table>
         <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
         <TableRow>
@@ -795,7 +802,7 @@ const companyNameMap = React.useMemo(() => {
         </TableRow>
       </TableHeader>
 
-            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+    <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
       {transactions.map((item, index) => (
            <TableRow key={index}>
             <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
@@ -896,6 +903,8 @@ const companyNameMap = React.useMemo(() => {
       ))}
 </TableBody>
     </Table>
+  </div>
+  </div>
   )}
 </div>
       </div>

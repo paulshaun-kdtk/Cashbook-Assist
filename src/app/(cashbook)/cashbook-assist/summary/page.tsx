@@ -19,7 +19,7 @@ export default function CashbookSummary() {
     <div>
       <PageBreadcrumb pageTitle="Cashbook Summary" />
       <div className="space-y-6">
-        <ComponentCard title="Summarry" desc="Your cashbook transaction summary visualisation">
+        <ComponentCard title="Summary" desc="Your cashbook transaction summary visualisation">
         <EcommerceMetricsCashbook showBalance />
           <StatisticsChartCashbook  />
         </ComponentCard>

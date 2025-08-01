@@ -10,6 +10,7 @@ import { Account } from "../cashbook/tables/companyList";
 import { fetchCashbookAccountsThunk } from "@/redux/api/thunks/accounts/fetch";
 import { RootState } from "@/redux/store";
 import { fetchCashbookThunk } from "@/redux/api/thunks/cashbooks/fetch";
+import { formatTextTruncate, formatTextTruncateNoDecoration } from "@/utils/formatters/text_formatter";
 
 
 const IncomeSourceSelectCashbook: React.FC = () => {
@@ -110,7 +111,7 @@ const handleChange = (optionValue: string) => {
 
     <div className="flex flex-row gap-2">
       <Button disabled variant={"link_primary"} className="text-xs">
-        {selectedCompany ? `Selected: ${selectedCompany.name}` : "Select a Cashbook"}
+        {selectedCompany ? `Selected: ${formatTextTruncate(selectedCompany.name, 12)}` : "Select a Cashbook"}
       </Button>
 
       <Select

@@ -1,7 +1,6 @@
 "use client";
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import IncomeSourceSelectCashbook from "@/components/header/companySelect";
-import { FreeTrialBannerCashbook } from "@/components/header/freeTrialBannerCashbook";
 import NotificationDropdown from "@/components/header/NotificationDropdown";
 import UserDropdown from "@/components/header/UserDropdown";
 import { useSidebar } from "@/context/SidebarContext";
@@ -184,8 +183,6 @@ const CashbookHeader: React.FC = () => {
           >
           <div className="flex items-center gap-2 2xsm:gap-3">
             <IncomeSourceSelectCashbook />
-
-            <FreeTrialBannerCashbook />
             
             {/* <!-- Dark Mode Toggler --> */}
             <ThemeToggleButton />
