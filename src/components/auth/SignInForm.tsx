@@ -7,10 +7,9 @@ import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { loginThunk } from "@/redux/auth/authThunks";
+import { loginThunk, checkSessionThunk } from "@/redux/auth/authThunks";
 import { useRouter } from "next/navigation";
 import toast from 'react-hot-toast';
-import { account } from "@/redux/appwrite/config";
 import { confirmUserNameBelongsToUser } from "@/redux/auth/confirmUser";
 
 export default function SignInForm() {
@@ -21,10 +20,11 @@ export default function SignInForm() {
   const [privateId, setPrivateId] = useState("")
   const [checkingUsername, setCheckingUsername] = React.useState(false);
   const [usernameAvailable, setUsernameAvailable] = React.useState<boolean | null>(null);
+  const [checkingSession, setCheckingSession] = React.useState(true);
   const dispatch = useDispatch()
   const router = useRouter() 
 
-  const { error, loading, authenticated } = useSelector((state) => state.auth);
+  const { error, loading, authenticated } = useSelector((state: { auth: { error: string | null; loading: boolean; authenticated: boolean } }) => state.auth);
 
     async function handleUsernameCheck() {
       if (!privateId) {
@@ -44,38 +44,49 @@ export default function SignInForm() {
     }
   
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!privateId || !usernameAvailable) {
         toast.error("Please set a valid username")
         return
     }
 
-    const response =  await dispatch(loginThunk({ email, password })).unwrap()
-    if (response) {
-      toast.success("Login successful!");
-      if (usernameAvailable && privateId) {
-        localStorage.setItem('unique_id', privateId)
+    try {
+      // @ts-expect-error - Redux toolkit dispatch typing issue
+      const response = await dispatch(loginThunk({ email, password })).unwrap()
+      if (response) {
+        toast.success("Login successful!");
+        if (usernameAvailable && privateId) {
+          localStorage.setItem('unique_id', privateId)
+        }
+        router.replace("/cashbook-assist/dashboard");
+        return;
       }
-      router.replace("/cashbook-assist/dashboard");
+    } catch (error: unknown) {
+      console.error(error)
+      toast.error((error as Error)?.message || "Login failed, please try again.");
     }
-    console.error(response)
-    toast.error(response.message || "Login failed, please try again.");
   };
 
-  const handleGoogleSignIn = async () => {
-  try {
-   account.createOAuth2Session(
-    'google',
-    process.env.NEXT_PUBLIC_REDIRECT_URL!,
-    process.env.NEXT_PUBLIC_FAILURE_REDIRECT_URL!
-)
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      setCheckingSession(true);
+      try {
+        // Check if there's an existing session
+        // @ts-expect-error - Redux toolkit dispatch typing issue
+        await dispatch(checkSessionThunk()).unwrap();
+        // If successful, user will be redirected by the authenticated check below
+        toast.success("Welcome back! Redirecting...");
+      } catch {
+        // No existing session, continue with normal sign-in flow
+        console.log("No existing session found");
+      } finally {
+        setCheckingSession(false);
+      }
+    };
 
-  }
-  catch (error) {
-    toast.error(`Google Sign-In failed, please try again.${error}`);
-  }
-  }
+    checkExistingSession();
+  }, [dispatch]);
 
   useEffect(() => {
     if (authenticated) {
@@ -86,31 +97,38 @@ export default function SignInForm() {
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full">
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
-      <div className="w-full max-w-md sm:pt-10 mx-auto mb-5">
-        <Link
-          href="/application/terms-of-use/"
-          className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-        >
-          <ChevronLeftIcon />
-          Terms of Service
-        </Link>
-      </div>
-        <div>
-          <div className="mb-5 sm:mb-8">
-            <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
-              Sign In
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Enter your email and password to sign in!
-            </p>
-            {error && (
-              <p className="mt-2 text-sm text-red-500">
-                {error}
-              </p>
-            )}
+        <div className="w-full max-w-md sm:pt-10 mx-auto mb-5">
+          <Link
+            href="/application/terms-of-use/"
+            className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+          >
+            <ChevronLeftIcon />
+            Terms of Service
+          </Link>
+        </div>
+
+        {checkingSession ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Checking for existing session...</p>
           </div>
+        ) : (
+          <div>
+            <div className="mb-5 sm:mb-8">
+              <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
+                Sign In
+              </h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Enter your email and password to sign in!
+              </p>
+              {error && (
+                <p className="mt-2 text-sm text-red-500">
+                  {error}
+                </p>
+              )}
+            </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
-              <button onClick={
+              {/* <button onClick={
                 handleGoogleSignIn
               } className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10">
                 <svg
@@ -138,7 +156,7 @@ export default function SignInForm() {
                   />
                 </svg>
                 Signin with Google
-              </button>
+              </button> */}
             </div>
             <div className="relative py-3 sm:py-5">
               <div className="absolute inset-0 flex items-center">
@@ -150,17 +168,17 @@ export default function SignInForm() {
                 </span>
               </div>
             </div>
-          <div>
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-6">
-                <div>
-                  <Label>
-                    Email <span className="text-error-500">*</span>{" "}
-                  </Label>
-                  <Input placeholder="info@gmail.com" type="email" 
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
+            <div>
+              <form onSubmit={handleSubmit}>
+                <div className="space-y-6">
+                  <div>
+                    <Label>
+                      Email <span className="text-error-500">*</span>{" "}
+                    </Label>
+                    <Input placeholder="info@gmail.com" type="email" 
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
                 <div>
                   <Label>
                     Password <span className="text-error-500">*</span>{" "}
@@ -241,8 +259,9 @@ export default function SignInForm() {
                 </Link>
               </p>
             </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
