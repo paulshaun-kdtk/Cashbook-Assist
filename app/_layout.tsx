@@ -11,8 +11,9 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 import 'react-native-reanimated';
 import Toast from "react-native-toast-message";
 import { Provider, useDispatch } from "react-redux";
@@ -34,6 +35,9 @@ useEffect(() => {
         
         // Then initialize auth
         dispatch(initAuth() as any);
+        
+        // Note: Subscription validation is initialized by the hook when needed
+        
         await new Promise(resolve => setTimeout(resolve, 2000));
       } catch (error) {
         console.error('App initialization failed:', error);
@@ -45,6 +49,15 @@ useEffect(() => {
 
     prepare();
   }, [dispatch]);
+
+  useEffect(() => {
+    Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
+    if (Platform.OS === 'ios' && process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY) {
+       Purchases.configure({apiKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY});
+    } else if (Platform.OS === 'android' && process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY) {
+       Purchases.configure({apiKey: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY});
+    }
+  }, []);
 
   if (!appReady) {
     return <SplashScreenComponent />;

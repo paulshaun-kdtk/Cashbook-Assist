@@ -19,7 +19,7 @@ export default function SigninScreen() {
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const { loading, user } = useSelector((state: RootState) => state.auth)
+  const { loading, user, error } = useSelector((state: RootState) => state.auth)
 
   const router = useRouter();
   const dispatch = useDispatch()
@@ -84,6 +84,7 @@ export default function SigninScreen() {
       }
       showToast({ type: 'error', text1: response?.message || 'Login failed, please try again.' });
     } catch (error) {
+      console.error('Login error:', error);
       showToast({ type: 'error', text1: error?.message || 'Login failed, please try again.' });
     }
   };
@@ -160,6 +161,7 @@ export default function SigninScreen() {
         <View className="flex-row justify-end items-center mb-10 mr-4">
           <ThemedText className="text-xs text-gray-400 dark:text-gray-500 mt-1">© Cashbook Assist {new Date().getFullYear()} All rights reserved.</ThemedText>
         </View>
+        {error && (<Text className="text-red-500 text-center mb-4">{error}</Text>)}
         {loading && <ActivityIndicator size={'small'}  color={'#ABF372'}/>}
 
         {/* Welcome Section */}
@@ -230,7 +232,7 @@ export default function SigninScreen() {
           </View>
 
           <View className="flex-row justify-end items-center mb-6">
-            <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync('https://cashbook-assist.shsoftwares.com/signup')}>
+            <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync('https://cashbook-assist.shsoftwares.com/signin')}>
               <ThemedText className="text-sm text-cyan-500 dark:text-cyan-400 font-semibold">Forgot Password?</ThemedText>
             </TouchableOpacity>
           </View>
@@ -292,7 +294,7 @@ export default function SigninScreen() {
         {/* Sign Up Link */}
         <View className="flex-row justify-center mt-8">
           <ThemedText className="text-sm text-gray-700 dark:text-gray-300">Don't have an account? </ThemedText>
-          <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync('https://cashbook-assist.shsoftwares.com/signup')}>
+          <TouchableOpacity onPress={() => router.push('/auth/signup')}>
             <ThemedText className="text-sm text-cyan-500 dark:text-cyan-400 font-bold">Sign Up</ThemedText>
           </TouchableOpacity>
         </View>

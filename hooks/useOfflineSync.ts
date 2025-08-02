@@ -11,17 +11,17 @@ export const useOfflineSync = () => {
   const { user } = useAuthUser();
 
   const performSync = useCallback(async () => {
-    if (!user || !isOnline) return;
+    if (!user || !isOnline || isSyncing) return;
     
     try {
-      // Assuming user has a which_key property - adjust based on your user structure
+      // The sync status listener will handle setting isSyncing states
       const userKey = (user as any).which_key || (user as any).$id;
       await syncService.syncAll(userKey);
     } catch (error) {
       console.error('Manual sync failed:', error);
-      setSyncError('Manual sync failed. Please try again.');
+      // Don't set sync error here - let the sync status listener handle it
     }
-  }, [user, isOnline]);
+  }, [user, isOnline, isSyncing]);
 
   useEffect(() => {
     // Listen to network changes

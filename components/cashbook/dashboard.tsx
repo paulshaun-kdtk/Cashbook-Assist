@@ -2,11 +2,15 @@ import { formatCurrency } from '@/assets/formatters/currency';
 import { ThemedText } from '@/components/ThemedText';
 import TransferFundsModal from '@/components/forms/transferFunds';
 import ExportModal from '@/components/ui/exportModal';
+import { PaywallModal } from '@/components/ui/paywallModal';
+import { SubscriptionStatusCard } from '@/components/ui/subscriptionStatusCard';
 import TransactionFilter from '@/components/ui/transactionFilter';
 import { useStoredUsername } from '@/hooks/useStoredUsername';
+import { useSubscriptionValidation } from '@/hooks/useSubscriptionValidation';
 import { selectCashbookBalances } from '@/redux/slices/cashbooks/selectCashbookTotals';
 import { RootState } from '@/redux/store';
 import { fetchCashbooksThunk } from '@/redux/thunks/cashbooks/fetch';
+import { fetchCategoriesThunk } from '@/redux/thunks/categories/fetch';
 import { fetchCompaniesThunk } from '@/redux/thunks/companies/fetch';
 import { fetchExpensesThunk } from '@/redux/thunks/expenses/fetch';
 import { fetchIncomeThunk } from '@/redux/thunks/income/fetch';
@@ -17,6 +21,7 @@ import { Link, router } from 'expo-router';
 import React from 'react';
 import { Modal, ScrollView, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import { AIReports } from '../ai/AIReports';
 import NotificationDropdown from '../ui/notificationDropdown';
 
 export default function HomeScreen() {
@@ -24,6 +29,14 @@ export default function HomeScreen() {
   const {user} = useSelector((state: RootState) => state.auth);
   const {username} = useStoredUsername()
   const dispatch = useDispatch()
+  
+  // Subscription validation hook - automatically validates subscriptions
+  const { 
+    validateNow, 
+    lastValidationTime, 
+    hasActiveSubscription,
+    syncedWithAppwrite 
+  } = useSubscriptionValidation();
 
     const balances = useSelector(selectCashbookBalances)
     const { income } = useSelector((state: RootState) => state.income);
@@ -34,12 +47,17 @@ export default function HomeScreen() {
     const { cashbooks } = useSelector(
       (state: RootState) => state.cashbooks
     );
+    const { categories } = useSelector(
+      (state: RootState) => state.categories
+    );
   
   const [showNotificationDropdown, setShowNotificationDropdown] = React.useState(false);
   const [showFilterModal, setShowFilterModal] = React.useState(false);
   const [showExportModal, setShowExportModal] = React.useState(false);
   const [showTransferModal, setShowTransferModal] = React.useState(false);
   const [showCashbookSelector, setShowCashbookSelector] = React.useState(false);
+  const [showAIReportsModal, setShowAIReportsModal] = React.useState(false);
+  const [showPaywallModal, setShowPaywallModal] = React.useState(false);
   const [filters, setFilters] = React.useState({
     startDate: "",
     endDate: "",
@@ -54,7 +72,8 @@ export default function HomeScreen() {
         dispatch(fetchCompaniesThunk(username));
         dispatch(fetchCashbooksThunk(username));
         dispatch(fetchIncomeThunk(username));
-        dispatch(fetchExpensesThunk(username))
+        dispatch(fetchExpensesThunk(username));
+        dispatch(fetchCategoriesThunk(username));
       }
     }, [dispatch, username]);
 
@@ -207,6 +226,11 @@ export default function HomeScreen() {
       </View>
         </View>
 
+        {/* Subscription Status Card */}
+        <SubscriptionStatusCard 
+          onUpgradePress={() => setShowPaywallModal(true)}
+        />
+
         {/* Balance */}
         <View className="bg-gray-100 dark:bg-[#1A1E4A] mx-4 mt-6 rounded-xl p-4">
           <View className="flex-row justify-between items-center">
@@ -280,7 +304,30 @@ export default function HomeScreen() {
               <Text className="text-xs text-black dark:text-white mt-1">Transfer</Text>
           </View>
           {/* )} */}
+
+          {/* AI Reports Action */}
+          {/* <View className="items-center">
+            <TouchableOpacity
+              className="bg-cyan-100 dark:bg-cyan-900 rounded-xl p-4 w-lg"
+              onPress={() => setShowAIReportsModal(true)}
+            >
+              <Ionicons name="analytics" size={24} color={theme === 'dark' ? '#06B6D4' : '#0891B2'} />
+            </TouchableOpacity>
+            <Text className="text-xs text-cyan-600 dark:text-cyan-400 mt-1 font-semibold">AI Reports</Text>
+          </View> */}
         </View>
+
+        {/* AI Insights Section */}
+        {/* {cashbooks.length > 0 && (
+          <AIInsightCard 
+            transactions={[...income, ...expenses]} 
+            categories={categories || []}
+            cashbook={cashbooks[0]}
+            onViewAllReports={() => {
+              setShowAIReportsModal(true);
+            }}
+          />
+        )} */}
 
         {/* Transactions */}
         <View className="bg-gray-100 dark:bg-[#1A1E4A] mx-4 mt-6 rounded-xl p-4">
@@ -434,6 +481,50 @@ export default function HomeScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* AI Reports Modal */}
+      <Modal
+        visible={showAIReportsModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowAIReportsModal(false)}
+      >
+        <View className="flex-1 bg-black bg-opacity-50 justify-center items-center">
+          <View className="bg-white dark:bg-[#1A1E4A] rounded-xl p-6 m-4 max-h-3/4 w-11/12">
+            <View className="flex-row justify-between items-center mb-4">
+              <ThemedText className="text-xl font-bold">AI Financial Reports</ThemedText>
+              <TouchableOpacity onPress={() => setShowAIReportsModal(false)}>
+                <Ionicons name="close" size={24} color={theme === 'dark' ? 'white' : 'black'} />
+              </TouchableOpacity>
+            </View>
+            
+            {cashbooks.length > 0 && (
+              <AIReports
+                transactions={[...income, ...expenses]}
+                categories={categories || []}
+                cashbook={cashbooks[0]}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Paywall Modal */}
+      <PaywallModal
+        visible={showPaywallModal}
+        onClose={() => setShowPaywallModal(false)}
+        onPurchaseSuccess={() => {
+          setShowPaywallModal(false);
+          // Refresh data after subscription purchase
+          if (username) {
+            dispatch(fetchCompaniesThunk(username));
+            dispatch(fetchCashbooksThunk(username));
+            dispatch(fetchIncomeThunk(username));
+            dispatch(fetchExpensesThunk(username));
+            dispatch(fetchCategoriesThunk(username));
+          }
+        }}
+      />
     </View>
   );
 }

@@ -1,4 +1,6 @@
+import { PaywallModal } from '@/components/ui/paywallModal';
 import { useStoredUsername } from '@/hooks/useStoredUsername';
+import { useSubscriptionRestrictions } from '@/hooks/useSubscriptionRestrictions';
 import { useToast } from '@/hooks/useToast';
 import { createCompanyThunk } from '@/redux/thunks/companies/post';
 import React from 'react';
@@ -19,6 +21,8 @@ export default function AddCompanyForm({onFormSubmit=null}) {
   const toast = useToast()
   const {username} = useStoredUsername()
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [showPaywallModal, setShowPaywallModal] = React.useState(false);
+  const { canCreateCompany } = useSubscriptionRestrictions();
    
   const { control, handleSubmit, formState: { errors } } = useForm({
     defaultValues: {
@@ -31,6 +35,13 @@ export default function AddCompanyForm({onFormSubmit=null}) {
   const onSubmit = async data => {
     // Prevent duplicate submissions
     if (isSubmitting) {
+      return;
+    }
+
+    // Check subscription restrictions first
+    if (!canCreateCompany.loading && !canCreateCompany.allowed) {
+      // Show paywall for upgrade instead of just showing error
+      setShowPaywallModal(true);
       return;
     }
 
@@ -124,19 +135,41 @@ export default function AddCompanyForm({onFormSubmit=null}) {
           {/* Add Company Button */}
           <TouchableOpacity
             className={`w-full p-4 rounded-xl items-center justify-center mt-4 ${
-              isSubmitting 
+              isSubmitting || (!canCreateCompany.loading && !canCreateCompany.allowed)
                 ? 'bg-gray-400 dark:bg-gray-600' 
                 : 'bg-cyan-700 dark:bg-cyan-600'
             }`}
             onPress={handleSubmit(onSubmit)}
-            disabled={isSubmitting}
+            disabled={isSubmitting || (!canCreateCompany.loading && !canCreateCompany.allowed)}
           >
             <Text className="text-white text-lg font-bold">
               {isSubmitting ? 'Adding Company...' : 'Add Company'}
             </Text>
           </TouchableOpacity>
+
+          {/* Restriction Message */}
+          {!canCreateCompany.loading && !canCreateCompany.allowed && (
+            <View className="mt-4 p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg border border-orange-300 dark:border-orange-700">
+              <Text className="text-orange-800 dark:text-orange-200 text-sm font-medium">
+                {canCreateCompany.message}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowPaywallModal(true)}
+                className="mt-2 bg-orange-600 px-4 py-2 rounded-lg"
+              >
+                <Text className="text-white text-center font-medium">Upgrade to Premium</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </ScrollView>
+
+      {/* Paywall Modal */}
+      <PaywallModal
+        visible={showPaywallModal}
+        onClose={() => setShowPaywallModal(false)}
+        onPurchaseSuccess={() => setShowPaywallModal(false)}
+      />
     </View>
   );
 }

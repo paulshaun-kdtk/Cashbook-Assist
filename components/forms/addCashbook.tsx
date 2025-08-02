@@ -1,6 +1,8 @@
 import { currencyList } from '@/assets/data/currencyList';
 import ItemPickerModal from '@/components/ui/itemPickerModal';
+import { PaywallModal } from '@/components/ui/paywallModal';
 import { useStoredUsername } from '@/hooks/useStoredUsername';
+import { useSubscriptionRestrictions } from '@/hooks/useSubscriptionRestrictions';
 import { useToast } from '@/hooks/useToast';
 import { createCashbookThunk } from '@/redux/thunks/cashbooks/post';
 import { useLocalSearchParams } from 'expo-router';
@@ -18,6 +20,8 @@ export default function AddCashbookForm({onFormSubmit=null}) {
   const [showPicker, setShowPicker] = React.useState(false);
   const [currency, setCurrency] = React.useState(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [showPaywallModal, setShowPaywallModal] = React.useState(false);
+  const { canCreateCashbook } = useSubscriptionRestrictions();
 
   const { control, handleSubmit, formState: { errors } } = useForm({
     defaultValues: {
@@ -31,6 +35,13 @@ export default function AddCashbookForm({onFormSubmit=null}) {
   const onSubmit = async data => {
     // Prevent duplicate submissions
     if (isSubmitting) {
+      return;
+    }
+
+    // Check subscription restrictions first
+    if (!canCreateCashbook.loading && !canCreateCashbook.allowed) {
+      // Show paywall for upgrade instead of just showing error
+      setShowPaywallModal(true);
       return;
     }
 
@@ -129,17 +140,26 @@ export default function AddCashbookForm({onFormSubmit=null}) {
               </TouchableOpacity>
           <TouchableOpacity
             className={`w-full p-4 rounded-xl items-center justify-center shadow-md mt-4 ${
-              isSubmitting 
+              isSubmitting || (!canCreateCashbook.loading && !canCreateCashbook.allowed)
                 ? 'bg-gray-400 dark:bg-gray-600' 
                 : 'bg-cyan-600 dark:bg-cyan-500'
             }`}
             onPress={handleSubmit(onSubmit)}
-            disabled={isSubmitting}
+            disabled={isSubmitting || (!canCreateCashbook.loading && !canCreateCashbook.allowed)}
           >
             <Text className="text-white text-lg font-bold">
               {isSubmitting ? 'Adding Cashbook...' : 'Add Cashbook'}
             </Text>
           </TouchableOpacity>
+
+          {/* Restriction Message */}
+          {!canCreateCashbook.loading && !canCreateCashbook.allowed && (
+            <View className="mt-4 p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg border border-orange-300 dark:border-orange-700">
+              <Text className="text-orange-800 dark:text-orange-200 text-sm font-medium">
+                {canCreateCashbook.message}
+              </Text>
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -153,6 +173,13 @@ export default function AddCashbookForm({onFormSubmit=null}) {
             setShowPicker(false);
             }}
         />
+
+      {/* Paywall Modal */}
+      <PaywallModal
+        visible={showPaywallModal}
+        onClose={() => setShowPaywallModal(false)}
+        onPurchaseSuccess={() => setShowPaywallModal(false)}
+      />
     </View>
   );
 }

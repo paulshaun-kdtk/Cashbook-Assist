@@ -1,10 +1,13 @@
+import { PaywallModal } from '@/components/ui/paywallModal';
 import { useStoredUsername } from '@/hooks/useStoredUsername';
+import { useSubscriptionRestrictions } from '@/hooks/useSubscriptionRestrictions';
 import { useToast } from '@/hooks/useToast';
 import { RootState } from '@/redux/store';
 import { fetchCategoriesThunk } from '@/redux/thunks/categories/fetch';
 import { createExpenseThunk } from '@/redux/thunks/expenses/post';
 import { createIncomeThunk } from '@/redux/thunks/income/post';
 import { Category } from '@/types/category';
+import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -15,6 +18,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { ThemedText } from '../ThemedText';
 import ItemPickerModal from '../ui/itemPickerModal';
 import AddCategoryForm from './addCategory';
+import { SmartTransactionForm } from './SmartTransactionForm';
 
 export default function AddTransactionForm({onFormSubmit}: {onFormSubmit?: (() => void) | null}) {
   const theme = useColorScheme(); // 'light' or 'dark'
@@ -26,6 +30,9 @@ export default function AddTransactionForm({onFormSubmit}: {onFormSubmit?: (() =
   const [showCategoryPicker, setShowCategoryPicker] = React.useState(false);
   const [category, setCategory] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [useAIMode, setUseAIMode] = React.useState(false);
+  const [showPaywallModal, setShowPaywallModal] = React.useState(false);
+  const { canCreateTransaction } = useSubscriptionRestrictions();
   const dispatch = useDispatch()
   const toast = useToast()
 
@@ -77,6 +84,13 @@ export default function AddTransactionForm({onFormSubmit}: {onFormSubmit?: (() =
       return;
     }
 
+    // Check subscription restrictions first
+    if (!canCreateTransaction.loading && !canCreateTransaction.allowed) {
+      // Show paywall for upgrade instead of just showing error
+      setShowPaywallModal(true);
+      return;
+    }
+
     setIsSubmitting(true);
 
     const transactionData = {
@@ -104,9 +118,67 @@ export default function AddTransactionForm({onFormSubmit}: {onFormSubmit?: (() =
 
   return (
     <View className="flex-1 bg-white dark:bg-[#0B0D2A] pt-12 min-h-screen" style={{ zIndex: 10000, elevation: 1000 }}>
-      <View className="px-4 flex-row items-center justify-center relative mb-6">
+      <View className="px-4 flex-row items-center justify-between relative mb-6">
         <ThemedText type='subtitle' className="text-xl font-bold">Add New Transaction</ThemedText>
+        
+        {/* AI Mode Toggle */}
+        <TouchableOpacity
+          onPress={() => setUseAIMode(!useAIMode)}
+          className={`flex-row items-center px-3 py-2 rounded-lg ${
+            useAIMode ? 'bg-cyan-500' : 'bg-gray-200 dark:bg-gray-700'
+          }`}
+        >
+          <Ionicons 
+            name="sparkles" 
+            size={16} 
+            color={useAIMode ? 'white' : (theme === 'dark' ? '#9CA3AF' : '#6B7280')} 
+          />
+          <Text className={`ml-1 text-xs font-semibold ${
+            useAIMode ? 'text-white' : 'text-gray-600 dark:text-gray-400'
+          }`}>
+            AI
+          </Text>
+        </TouchableOpacity>
       </View>
+
+      {/* Conditional Rendering: AI Smart Form vs Regular Form */}
+      {useAIMode ? (
+        <SmartTransactionForm
+          categories={allCategories}
+          onSubmit={async (transaction) => {
+            setIsSubmitting(true);
+            try {
+              const transactionData = {
+                description: transaction.description,
+                category: transaction.category,
+                memo: transaction.memo,
+                amount: transaction.amount,
+                which_cashbook: which_cashbook as string,
+                which_key: username,
+                createdAt: new Date().toISOString(),
+              };
+
+              const success = transaction.type === 'income' 
+                ? await dispatch(createIncomeThunk({data: transactionData})).unwrap() 
+                : await dispatch(createExpenseThunk({data: transactionData})).unwrap();
+
+              if (success) {
+                toast.showToast({ type: 'success', text1: 'Transaction added successfully!' });
+                if (onFormSubmit) onFormSubmit();
+              }
+            } catch (error: any) {
+              toast.showToast({ type: 'error', text1: error?.message || 'Transaction creation failed, please try again.' });
+            } finally {
+              setIsSubmitting(false);
+            }
+          }}
+          onCancel={() => {
+            if (onFormSubmit) onFormSubmit();
+          }}
+        />
+      ) : (
+        // Original Form Content
+        <>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 350 }}>
         <View className="mx-4 rounded-xl overflow-hidden bg-gray-100 dark:bg-[#1A1E4A] shadow-lg p-4">
@@ -217,17 +289,32 @@ export default function AddTransactionForm({onFormSubmit}: {onFormSubmit?: (() =
 
           <TouchableOpacity
             className={`w-full p-4 rounded-xl items-center justify-center shadow-md mt-4 ${
-              isSubmitting 
+              isSubmitting || (!canCreateTransaction.loading && !canCreateTransaction.allowed)
                 ? 'bg-gray-400 dark:bg-gray-600' 
                 : 'bg-cyan-600 dark:bg-cyan-500'
             }`}
             onPress={handleSubmit(onSubmit)}
-            disabled={isSubmitting}
+            disabled={isSubmitting || (!canCreateTransaction.loading && !canCreateTransaction.allowed)}
           >
             <Text className="text-white text-lg font-bold">
               {isSubmitting ? 'Adding Transaction...' : 'Add Transaction'}
             </Text>
           </TouchableOpacity>
+
+          {/* Restriction Message */}
+          {!canCreateTransaction.loading && !canCreateTransaction.allowed && (
+            <View className="mt-4 p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg border border-orange-300 dark:border-orange-700">
+              <Text className="text-orange-800 dark:text-orange-200 text-sm font-medium">
+                {canCreateTransaction.message}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowPaywallModal(true)}
+                className="mt-2 bg-orange-600 px-4 py-2 rounded-lg"
+              >
+                <Text className="text-white text-center font-medium">Upgrade to Premium</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -256,6 +343,17 @@ export default function AddTransactionForm({onFormSubmit}: {onFormSubmit?: (() =
                   setShowCategoryPicker(false);
                   }}
               />
+        </>
+      )}
+
+      <Modalize rootStyle={{ backgroundColor: 'transparent' }} modalStyle={{ backgroundColor: 'transparent' }} ref={modalizeRef}><AddCategoryForm onFormSubmit={handleCloseModal} /></Modalize>
+
+      {/* Paywall Modal */}
+      <PaywallModal
+        visible={showPaywallModal}
+        onClose={() => setShowPaywallModal(false)}
+        onPurchaseSuccess={() => setShowPaywallModal(false)}
+      />
     </View>
   );
 }

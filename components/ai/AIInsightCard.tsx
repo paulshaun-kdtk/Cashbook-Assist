@@ -25,19 +25,29 @@ export const AIInsightCard: React.FC<AIInsightCardProps> = ({
   const { analyzeSpending, isLoading, error } = useAIService();
   const [insights, setInsights] = useState<SpendingInsight[]>([]);
   const [showInsight, setShowInsight] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const loadInsights = useCallback(async () => {
+    if (transactions.length === 0) {
+      console.log('AIInsightCard: No transactions available');
+      return;
+    }
+    
+    console.log('AIInsightCard: Loading insights for', transactions.length, 'transactions and', categories.length, 'categories');
+    
     try {
       const aiInsights = await analyzeSpending(transactions, categories);
+      console.log('AIInsightCard: Got insights:', aiInsights);
       setInsights(aiInsights);
       setShowInsight(aiInsights.length > 0);
     } catch (err) {
       console.error('Failed to load AI insights:', err);
+      setLocalError(err instanceof Error ? err.message : 'Failed to load insights');
     }
   }, [analyzeSpending, transactions, categories]);
 
   useEffect(() => {
-    if (transactions.length > 0 && categories.length > 0) {
+    if (transactions.length > 0) {
       loadInsights();
     }
   }, [transactions, categories, loadInsights]);
@@ -82,7 +92,8 @@ export const AIInsightCard: React.FC<AIInsightCardProps> = ({
     );
   }
 
-  if (error || !showInsight || insights.length === 0) {
+  if (error || localError || !showInsight || insights.length === 0) {
+    const errorMessage = error || localError;
     return (
       <ThemedView style={[{
         padding: 16,
@@ -96,10 +107,10 @@ export const AIInsightCard: React.FC<AIInsightCardProps> = ({
           <View style={{ alignItems: 'center' }}>
             <Text style={{ fontSize: 24, marginBottom: 8 }}>🤖</Text>
             <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#1f2937', marginBottom: 4 }}>
-              Get AI Insights
+              {errorMessage ? 'AI Insights Error' : 'Get AI Insights'}
             </Text>
             <Text style={{ fontSize: 12, color: '#6b7280', textAlign: 'center' }}>
-              Tap to analyze your spending patterns
+              {errorMessage || 'Tap to analyze your spending patterns'}
             </Text>
           </View>
         </TouchableOpacity>

@@ -175,15 +175,26 @@ export class GeminiAIService {
     transactions: Transaction[],
     categories: Category[]
   ): Promise<SpendingInsight[]> {
+    console.log('GeminiAIService: analyzeSpendingPatterns called with', {
+      transactionCount: transactions.length,
+      categoryCount: categories.length,
+      firstTransaction: transactions[0],
+      firstCategory: categories[0]
+    });
+    
     try {
       const categoryMap = new Map(categories.map(cat => [cat.$id, cat.name]));
       const analysis = this.analyzeTransactionPatterns(transactions, categoryMap);
       
+      console.log('GeminiAIService: Transaction analysis:', analysis);
+      
       const prompt = `
         As a personal finance AI advisor, analyze these spending patterns and provide insights:
         
-        Spending Analysis:
+        Financial Analysis:
+        - Total Income: $${analysis.totalIncome}
         - Total Expenses: $${analysis.totalExpenses}
+        - Net Cash Flow: $${analysis.totalIncome - analysis.totalExpenses}
         - Average Daily Spending: $${analysis.avgDailySpending}
         - Most Expensive Category: ${analysis.topCategory}
         - Spending Trend: ${analysis.trend}
@@ -389,20 +400,40 @@ export class GeminiAIService {
   }
 
   private analyzeTransactionPatterns(transactions: Transaction[], categoryMap: Map<string, string>) {
-    const expenses = transactions.filter(t => t.type === 'expense');
-    const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
+    console.log('GeminiAIService: analyzeTransactionPatterns called with', {
+      transactionCount: transactions.length,
+      categoryMapSize: categoryMap.size,
+      sampleTransaction: transactions[0]
+    });
+    
+    // Handle transactions that might not have explicit type field
+    // Assume negative amounts are expenses, positive are income
+    const expenses = transactions.filter(t => 
+      t.type === 'expense' || (!t.type && t.amount < 0)
+    );
+    const income = transactions.filter(t => 
+      t.type === 'income' || (!t.type && t.amount > 0)
+    );
+    
+    console.log('GeminiAIService: Filtered transactions', {
+      expenseCount: expenses.length,
+      incomeCount: income.length
+    });
+    
+    const totalExpenses = expenses.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    const totalIncome = income.reduce((sum, t) => sum + Math.abs(t.amount), 0);
     
     const categoryTotals: { [key: string]: number } = {};
     expenses.forEach(t => {
-      const categoryName = categoryMap.get(t.category) || 'Unknown';
-      categoryTotals[categoryName] = (categoryTotals[categoryName] || 0) + t.amount;
+      const categoryName = categoryMap.get(t.category) || t.category || 'Unknown';
+      categoryTotals[categoryName] = (categoryTotals[categoryName] || 0) + Math.abs(t.amount);
     });
     
     const topCategory = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0]?.[0] || 'None';
     
     const dailySpending = expenses.reduce((acc, t) => {
-      const date = new Date(t.date).toDateString();
-      acc[date] = (acc[date] || 0) + t.amount;
+      const date = new Date(t.date || t.createdAt).toDateString();
+      acc[date] = (acc[date] || 0) + Math.abs(t.amount);
       return acc;
     }, {} as { [key: string]: number });
     
@@ -410,6 +441,7 @@ export class GeminiAIService {
     
     return {
       totalExpenses,
+      totalIncome,
       avgDailySpending,
       topCategory,
       categoryTotals,

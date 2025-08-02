@@ -1,4 +1,5 @@
 
+import { useCallback } from 'react';
 import Toast from 'react-native-toast-message';
 
 type ToastType = 'success' | 'error' | 'info';
@@ -12,7 +13,7 @@ interface ToastOptions {
 }
 
 export function useToast() {
-  const showToast = ({
+  const showToast = useCallback(({
     type = 'success',
     text1,
     text2,
@@ -26,11 +27,11 @@ export function useToast() {
       position,
       visibilityTime,
     });
-  };
+  }, []);
 
-  const hideToast = () => {
+  const hideToast = useCallback(() => {
     Toast.hide();
-  };
+  }, []);
 
   return { showToast, hideToast };
 }

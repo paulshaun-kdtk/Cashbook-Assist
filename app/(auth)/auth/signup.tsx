@@ -1,7 +1,7 @@
-import SignUpScreen from '@/components/auth/signupScreen';
+import SubscriptionSignupScreen from '@/components/auth/subscriptionSignupScreen';
 
 export default function Dashboard() {
   return (
-      <SignUpScreen />
+      <SubscriptionSignupScreen />
   );
 }

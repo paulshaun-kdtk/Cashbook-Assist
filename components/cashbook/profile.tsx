@@ -1,8 +1,9 @@
 import { RootState } from '@/redux/store';
 import { FontAwesome, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import React from 'react';
-import { ScrollView, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { ScrollView, Share, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useSelector } from 'react-redux';
 import { ThemedText } from '../ThemedText';
 
@@ -45,16 +46,20 @@ export default function ProfileScreen() {
           </View>
 
           {/* Language */}
-          <TouchableOpacity className="flex-row items-center justify-between py-3 px-4 bg-gray-100 dark:bg-[#1A1E4A] border-b border-gray-200 dark:border-[#2C2F5D]">
+          <TouchableOpacity
+            onPress={() => WebBrowser.openBrowserAsync('https://apps.apple.com/account/subscriptions')}
+            className="flex-row items-center justify-between py-3 px-4 bg-gray-100 dark:bg-[#1A1E4A] border-b border-gray-200 dark:border-[#2C2F5D]">
             <View className="flex-row items-center">
               <MaterialCommunityIcons name="web" size={24} color={theme === 'dark' ? 'white' : '#6B7280'} className="mr-3" />
               <ThemedText className="text-base">Subscription</ThemedText>
             </View>
             <Ionicons name="chevron-forward" size={20} color={theme === 'dark' ? 'white' : '#6B7280'} />
-          </TouchableOpacity>
+            </TouchableOpacity>
 
           {/* About */}
-          <TouchableOpacity className="flex-row items-center justify-between py-3 px-4 bg-gray-100 dark:bg-[#1A1E4A] border-b border-gray-200 dark:border-[#2C2F5D]">
+          <TouchableOpacity className="flex-row items-center justify-between py-3 px-4 bg-gray-100 dark:bg-[#1A1E4A] border-b border-gray-200 dark:border-[#2C2F5D]"
+          onPress={() => WebBrowser.openBrowserAsync('https://cashbook-assist.shsoftwares.com/#features')}
+          >
             <View className="flex-row items-center">
               <Ionicons name="help-circle-outline" size={24} color={theme === 'dark' ? 'white' : '#6B7280'} className="mr-3" />
               <ThemedText className="text-base">About</ThemedText>
@@ -63,7 +68,9 @@ export default function ProfileScreen() {
           </TouchableOpacity>
 
           {/* Terms & Conditions */}
-          <TouchableOpacity className="flex-row items-center justify-between py-3 px-4 bg-gray-100 dark:bg-[#1A1E4A] border-b border-gray-200 dark:border-[#2C2F5D]">
+          <TouchableOpacity 
+          onPress={() => WebBrowser.openBrowserAsync('https://cashbook-assist.shsoftwares.com/application/terms-of-use')}
+          className="flex-row items-center justify-between py-3 px-4 bg-gray-100 dark:bg-[#1A1E4A] border-b border-gray-200 dark:border-[#2C2F5D]">
             <View className="flex-row items-center">
               <Ionicons name="information-circle-outline" size={24} color={theme === 'dark' ? 'white' : '#6B7280'} className="mr-3" />
               <ThemedText className="text-base">Terms & Conditions</ThemedText>
@@ -72,7 +79,9 @@ export default function ProfileScreen() {
           </TouchableOpacity>
 
           {/* Privacy Policy */}
-          <TouchableOpacity className="flex-row items-center justify-between py-3 px-4 bg-gray-100 dark:bg-[#1A1E4A] border-b border-gray-200 dark:border-[#2C2F5D]">
+          <TouchableOpacity 
+          onPress={() => WebBrowser.openBrowserAsync('https://cashbook-assist.shsoftwares.com/application/privacy-policy')}
+          className="flex-row items-center justify-between py-3 px-4 bg-gray-100 dark:bg-[#1A1E4A] border-b border-gray-200 dark:border-[#2C2F5D]">
             <View className="flex-row items-center">
               <Ionicons name="lock-closed-outline" size={24} color={theme === 'dark' ? 'white' : '#6B7280'} className="mr-3" />
               <ThemedText className="text-base">Privacy Policy</ThemedText>
@@ -81,7 +90,9 @@ export default function ProfileScreen() {
           </TouchableOpacity>
 
           {/* Rate This App */}
-          <TouchableOpacity className="flex-row items-center justify-between py-3 px-4 bg-gray-100 dark:bg-[#1A1E4A] border-b border-gray-200 dark:border-[#2C2F5D]">
+          <TouchableOpacity 
+          onPress={() => WebBrowser.openBrowserAsync('https://apps.apple.com/app/id6749472637')}
+          className="flex-row items-center justify-between py-3 px-4 bg-gray-100 dark:bg-[#1A1E4A] border-b border-gray-200 dark:border-[#2C2F5D]">
             <View className="flex-row items-center">
               <FontAwesome name="star-o" size={24} color={theme === 'dark' ? 'white' : '#6B7280'} className="mr-3" />
               <ThemedText className="text-base">Rate This App</ThemedText>
@@ -90,7 +101,14 @@ export default function ProfileScreen() {
           </TouchableOpacity>
 
           {/* Share This App */}
-          <TouchableOpacity className="flex-row items-center justify-between py-3 px-4 bg-gray-100 dark:bg-[#1A1E4A]">
+          <TouchableOpacity 
+          onPress={() => {
+            Share.share({
+              message: 'Check out Cashbook Assist - the best app for managing your finances! Download it now: https://apps.apple.com/app/id6749472637',
+              url: 'https://apps.apple.com/app/id6749472637',
+            });
+          }}
+          className="flex-row items-center justify-between py-3 px-4 bg-gray-100 dark:bg-[#1A1E4A]">
             <View className="flex-row items-center">
               <Ionicons name="share-social-outline" size={24} color={theme === 'dark' ? 'white' : '#6B7280'} className="mr-3" />
               <ThemedText className="text-base">Share This App</ThemedText>

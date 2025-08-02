@@ -40,11 +40,6 @@ export default function EditProfilePage() {
     }
 };
 
-  const handleDeleteAllData = () => {
-    console.log('Deleting all data...');
-    // Implement logic to delete all user-related data (requires confirmation)
-  };
-
   const handleDeleteAccount = async () => {
     await WebBrowser.openBrowserAsync('https://cashbook-assist.shsoftwares.com/profile');
   };

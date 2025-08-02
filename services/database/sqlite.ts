@@ -153,7 +153,7 @@ export class SQLiteService {
     `, [
       company.$id,
       company.name,
-      company.color,
+      company.color || '#fd0s00',
       company.description,
       company.$sequence,
       company.$createdAt,
