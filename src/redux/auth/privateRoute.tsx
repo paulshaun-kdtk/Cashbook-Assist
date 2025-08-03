@@ -29,8 +29,9 @@ export default function PrivateRoute({ children }: { children: React.ReactNode }
       }
 
       const hasSubscription = await confirmHasSubscription(userEmail);
-
+     
       if (!hasSubscription.success) {
+        console.error("Subscription check failed:", hasSubscription);
         toast.error(hasSubscription.message || "You need an active subscription to access this page.");
         router.replace("/no-sub?email=" + userEmail + "&message=" + encodeURIComponent(hasSubscription.message || "No subscription found"));
         return;

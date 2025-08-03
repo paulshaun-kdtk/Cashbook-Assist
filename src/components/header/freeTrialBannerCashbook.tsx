@@ -58,28 +58,6 @@ useEffect(() => {
   };
 }, [dispatch, user]);
 
-  useEffect(() => {
-    if (!subscriptionCheckComplete || !other_subscriptions) {
-      return;
-    }
-
-    const hasCashbook = other_subscriptions.some((item: Subscription) => item.subscription_system === "cashbook");
- 
-    if (hasCashbook) {
-      toast.success("Welcome back.");
-      return;
-    }
-    
-    if (!hasCashbook && !is_on_free_trial) {
-      toast.error("You do not have a Cashbook subscription. Please upgrade to access Cashbook features.");
-      router.replace("/no-sub?email=" + user.email + "&message=" + encodeURIComponent("No subscription found"));
-    } else {
-      console.log("User has free trial access to cashbook features");
-    }
-
-    console.log("other_subscriptions", other_subscriptions);
-  }, [other_subscriptions, router, user, subscriptionCheckComplete, is_on_free_trial]);
-
     useEffect(() => {
         const checkSubscription = async () => {
             if (user) {
@@ -130,7 +108,7 @@ useEffect(() => {
               variant="warning"
               title="Free Trial Mode"
               message={`You are currently on a free trial. ${time_remaining} days remaining.`}
-              linkHref="/no-sub?type=free_trial"
+              linkHref="/no-sub?type=free_trial=cancelled"
               linkText="Upgrade Now"
               dismissable={true}
               dismissText="Dismiss"
