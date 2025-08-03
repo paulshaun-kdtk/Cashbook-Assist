@@ -1,4 +1,4 @@
-import { confirmHasSubscription } from '@/redux/appwrite/auth/userActions';
+import { sessionAwareSubscriptionService } from './sessionAwareSubscriptionService';
 
 export interface SubscriptionLimits {
   maxCompanies: number;
@@ -47,6 +47,7 @@ export class SubscriptionService {
     // Check cache first
     const now = Date.now();
     if (this.cachedStatus && (now - this.cacheTimestamp) < this.cacheExpiryMs) {
+      console.log('📋 Using cached subscription status:', this.cachedStatus);
       return this.cachedStatus;
     }
 
@@ -57,12 +58,34 @@ export class SubscriptionService {
         throw new Error('User email not found in session');
       }
 
-      const subscriptionResult = await confirmHasSubscription(userEmail);
+      console.log('🔍 Fetching fresh subscription status for:', userEmail);
+
+      // Use the new Appwrite-first subscription check
+      const subscriptionResult = await sessionAwareSubscriptionService.checkSubscriptionAuto(userEmail);
       
+      console.log('📊 Raw subscription result:', {
+        success: subscriptionResult.success,
+        isPremium: (subscriptionResult as any).isPremium,
+        free_trial: subscriptionResult.free_trial,
+        method: (subscriptionResult as any).method,
+        source: (subscriptionResult as any).source
+      });
+
       let status: UserSubscriptionStatus;
 
       if (subscriptionResult.success) {
-        if (subscriptionResult.free_trial) {
+        // Check for active premium subscription first (highest priority)
+        if ((subscriptionResult as any).isPremium) {
+          console.log('✅ User has active premium subscription');
+          status = {
+            isFreeTrial: false,
+            isPremium: true,
+            subscriptionStatus: 'active',
+            limits: this.getPremiumLimits()
+          };
+        } else if (subscriptionResult.free_trial) {
+          console.log('🕒 User is on free trial');
+          // User is on free trial (pending subscription)
           status = {
             isFreeTrial: true,
             isPremium: false,
@@ -71,15 +94,18 @@ export class SubscriptionService {
             timeRemaining: subscriptionResult.time_remaining
           };
         } else {
+          console.log('❌ User has expired/cancelled subscription');
+          // Subscription exists but not active (expired/cancelled)
           status = {
-            isFreeTrial: false,
-            isPremium: true,
-            subscriptionStatus: 'active',
-            limits: this.getPremiumLimits()
+            isFreeTrial: true,
+            isPremium: false,
+            subscriptionStatus: 'expired',
+            limits: this.getFreeTrialLimits()
           };
         }
       } else {
-        // No subscription found - treat as free trial
+        console.log('📝 No subscription found for user');
+        // No subscription found - treat as free trial opportunity
         status = {
           isFreeTrial: true,
           isPremium: false,
@@ -91,6 +117,13 @@ export class SubscriptionService {
       // Cache the result
       this.cachedStatus = status;
       this.cacheTimestamp = now;
+
+      console.log('📋 Final subscription status determined:', {
+        isPremium: status.isPremium,
+        isFreeTrial: status.isFreeTrial,
+        subscriptionStatus: status.subscriptionStatus,
+        source: (subscriptionResult as any).source || (subscriptionResult as any).method
+      });
 
       return status;
     } catch (error) {
@@ -160,8 +193,19 @@ export class SubscriptionService {
   }
 
   clearCache(): void {
+    console.log('🗑️ Clearing subscription cache');
     this.cachedStatus = null;
     this.cacheTimestamp = 0;
+  }
+
+  /**
+   * Force refresh subscription status (bypasses cache)
+   * Useful when subscription status has just changed
+   */
+  async forceRefreshSubscriptionStatus(user: any): Promise<UserSubscriptionStatus> {
+    console.log('🔄 Force refreshing subscription status');
+    this.clearCache();
+    return await this.getUserSubscriptionStatus(user);
   }
 }
 

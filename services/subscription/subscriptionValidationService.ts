@@ -132,6 +132,18 @@ export class SubscriptionValidationService {
     try {
       console.log('Starting subscription validation...');
 
+      // Check if RevenueCat is configured before using it
+      const isConfigured = await Purchases.isConfigured();
+      if (!isConfigured) {
+        console.warn('⚠️ RevenueCat not configured, skipping validation');
+        return {
+          isValid: false,
+          hasActiveSubscription: false,
+          syncedWithAppwrite: false,
+          error: 'RevenueCat not configured'
+        };
+      }
+
       // Get current customer info from RevenueCat
       const customerInfo = await Purchases.getCustomerInfo();
       

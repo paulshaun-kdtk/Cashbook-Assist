@@ -1,7 +1,7 @@
 import { RootState } from '@/redux/store';
 import { getCounts } from '@/services/subscription/selectors';
 import { subscriptionService } from '@/services/subscription/subscriptionService';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 interface RestrictionCheck {
@@ -20,34 +20,61 @@ export const useSubscriptionRestrictions = () => {
   const [cashbookRestriction, setCashbookRestriction] = useState<RestrictionCheck>({ allowed: true, loading: true });
   const [transactionRestriction, setTransactionRestriction] = useState<RestrictionCheck>({ allowed: true, loading: true });
 
-  useEffect(() => {
-    const checkRestrictions = async () => {
-      if (!user) return;
+  const checkRestrictions = useCallback(async (forceRefresh = false) => {
+    if (!user) return;
 
-      try {
-        // Check company restrictions
-        const companyCheck = await subscriptionService.canCreateCompany(user, companiesCount);
-        setCompanyRestriction({ ...companyCheck, loading: false });
-
-        // Check cashbook restrictions
-        const cashbookCheck = await subscriptionService.canCreateCashbook(user, cashbooksCount);
-        setCashbookRestriction({ ...cashbookCheck, loading: false });
-
-        // Check transaction restrictions
-        const transactionCheck = await subscriptionService.canCreateTransaction(user, transactionsCount);
-        setTransactionRestriction({ ...transactionCheck, loading: false });
-
-      } catch (error) {
-        console.error('Error checking restrictions:', error);
-        // Default to allowing on error
-        setCompanyRestriction({ allowed: true, loading: false });
-        setCashbookRestriction({ allowed: true, loading: false });
-        setTransactionRestriction({ allowed: true, loading: false });
+    try {
+      console.log('🔍 useSubscriptionRestrictions: Checking restrictions', { forceRefresh });
+      
+      // If force refresh, clear cache first
+      if (forceRefresh) {
+        subscriptionService.clearCache();
       }
-    };
 
-    checkRestrictions();
+      // Check company restrictions
+      const companyCheck = await subscriptionService.canCreateCompany(user, companiesCount);
+      setCompanyRestriction({ ...companyCheck, loading: false });
+
+      // Check cashbook restrictions
+      const cashbookCheck = await subscriptionService.canCreateCashbook(user, cashbooksCount);
+      setCashbookRestriction({ ...cashbookCheck, loading: false });
+
+      // Check transaction restrictions
+      const transactionCheck = await subscriptionService.canCreateTransaction(user, transactionsCount);
+      setTransactionRestriction({ ...transactionCheck, loading: false });
+      
+      console.log('✅ useSubscriptionRestrictions: Restrictions updated', {
+        company: companyCheck.allowed,
+        cashbook: cashbookCheck.allowed,
+        transaction: transactionCheck.allowed
+      });
+
+    } catch (error) {
+      console.error('❌ useSubscriptionRestrictions: Error checking restrictions:', error);
+      // Default to allowing on error
+      setCompanyRestriction({ allowed: true, loading: false });
+      setCashbookRestriction({ allowed: true, loading: false });
+      setTransactionRestriction({ allowed: true, loading: false });
+    }
   }, [user, companiesCount, cashbooksCount, transactionsCount]);
+
+  useEffect(() => {
+    checkRestrictions();
+  }, [checkRestrictions]);
+
+  // Set up periodic refresh to catch subscription changes
+  useEffect(() => {
+    if (!user) return;
+
+    const refreshInterval = setInterval(() => {
+      console.log('⏰ useSubscriptionRestrictions: Periodic refresh');
+      checkRestrictions(true); // Force refresh to bypass cache
+    }, 60000); // Refresh every minute
+
+    return () => {
+      clearInterval(refreshInterval);
+    };
+  }, [user, checkRestrictions]);
 
   return {
     canCreateCompany: companyRestriction,
@@ -57,6 +84,7 @@ export const useSubscriptionRestrictions = () => {
       companies: companiesCount,
       cashbooks: cashbooksCount,
       transactions: transactionsCount
-    }
+    },
+    refreshRestrictions: () => checkRestrictions(true)
   };
 };

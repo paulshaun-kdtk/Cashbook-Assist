@@ -1,9 +1,11 @@
+import { useToast } from '@/hooks/useToast';
 import { RootState } from '@/redux/store';
+import { fullSyncHybridWithSession } from '@/utils/debugSubscriptionFixed';
 import { FontAwesome, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import React from 'react';
-import { ScrollView, Share, TouchableOpacity, useColorScheme, View } from 'react-native';
+import React, { useState } from 'react';
+import { ActivityIndicator, ScrollView, Share, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useSelector } from 'react-redux';
 import { ThemedText } from '../ThemedText';
 
@@ -11,6 +13,38 @@ export default function ProfileScreen() {
     const router = useRouter()
   const theme = useColorScheme(); // 'light' or 'dark'
   const { user } = useSelector((state: RootState) => state.auth);
+  const { showToast } = useToast();
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleManualSync = async () => {
+    if (!(user as any)?.email) {
+      showToast({ type: 'error', text1: 'No user email found' });
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      // Use session-based hybrid sync for authenticated users to avoid API key conflicts
+      const result = await fullSyncHybridWithSession((user as any).email, false);
+      
+      showToast({ 
+        type: 'success', 
+        text1: 'Subscription Synced!', 
+        text2: result.message || 'Sync completed successfully'
+      });
+      
+      console.log('Session-based sync result:', result);
+    } catch (error) {
+      console.error('Manual sync failed:', error);
+      showToast({ 
+        type: 'error', 
+        text1: 'Sync Failed', 
+        text2: 'Please try again later' 
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   return (
     <View className="flex-1 bg-white dark:bg-[#0B0D2A] pt-12">
@@ -23,8 +57,8 @@ export default function ProfileScreen() {
 
         {/* Profile Info */}
         <View className="items-center mb-8">
-            <ThemedText className="text-lg font-bold mt-4">{user?.name}</ThemedText>
-            <ThemedText className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</ThemedText>
+            <ThemedText className="text-lg font-bold mt-4">{(user as any)?.name}</ThemedText>
+            <ThemedText className="text-sm text-gray-500 dark:text-gray-400">{(user as any)?.email}</ThemedText>
         </View>
 
         {/* Settings Options */}
@@ -45,7 +79,7 @@ export default function ProfileScreen() {
             <ThemedText className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase">General Settings</ThemedText>
           </View>
 
-          {/* Language */}
+          {/* Subscription */}
           <TouchableOpacity
             onPress={() => WebBrowser.openBrowserAsync('https://apps.apple.com/account/subscriptions')}
             className="flex-row items-center justify-between py-3 px-4 bg-gray-100 dark:bg-[#1A1E4A] border-b border-gray-200 dark:border-[#2C2F5D]">
@@ -54,7 +88,23 @@ export default function ProfileScreen() {
               <ThemedText className="text-base">Subscription</ThemedText>
             </View>
             <Ionicons name="chevron-forward" size={20} color={theme === 'dark' ? 'white' : '#6B7280'} />
-            </TouchableOpacity>
+          </TouchableOpacity>
+
+          {/* Manual Sync Button */}
+          <TouchableOpacity
+            onPress={handleManualSync}
+            disabled={isSyncing}
+            className="flex-row items-center justify-between py-3 px-4 bg-gray-100 dark:bg-[#1A1E4A] border-b border-gray-200 dark:border-[#2C2F5D]">
+            <View className="flex-row items-center">
+              <MaterialCommunityIcons name="sync" size={24} color={theme === 'dark' ? 'white' : '#6B7280'} className="mr-3" />
+              <ThemedText className="text-base">Sync Subscription</ThemedText>
+            </View>
+            {isSyncing ? (
+              <ActivityIndicator size="small" color={theme === 'dark' ? 'white' : '#6B7280'} />
+            ) : (
+              <Ionicons name="refresh" size={20} color={theme === 'dark' ? 'white' : '#6B7280'} />
+            )}
+          </TouchableOpacity>
 
           {/* About */}
           <TouchableOpacity className="flex-row items-center justify-between py-3 px-4 bg-gray-100 dark:bg-[#1A1E4A] border-b border-gray-200 dark:border-[#2C2F5D]"

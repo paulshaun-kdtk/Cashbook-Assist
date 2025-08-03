@@ -68,7 +68,6 @@ const annualBonusFeatures = [
 export default function SubscriptionSignupScreen() {
   const theme = useColorScheme();
   const { showToast } = useToast();
-
   // Form state
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');

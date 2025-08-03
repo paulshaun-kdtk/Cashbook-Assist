@@ -2,6 +2,7 @@ import { RootState } from '@/redux/store';
 import { subscriptionValidationService, ValidationResult } from '@/services/subscription/subscriptionValidationService';
 import { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useAppwriteSubscriptionListener } from './useAppwriteSubscriptionListener';
 
 export const useSubscriptionValidation = () => {
   const { user } = useSelector((state: RootState) => state.auth);
@@ -11,6 +12,9 @@ export const useSubscriptionValidation = () => {
   
   // Extract user email for dependency tracking
   const userEmail = (user as any)?.email;
+
+  // Start Appwrite subscription listener for manual changes
+  const { isListening } = useAppwriteSubscriptionListener();
 
   // Manual validation trigger - use useCallback with stable dependencies
   const validateNow = useCallback(async () => {
@@ -88,6 +92,7 @@ export const useSubscriptionValidation = () => {
     validateNow,
     hasActiveSubscription: validationResult?.hasActiveSubscription ?? false,
     isValidationValid: validationResult?.isValid ?? false,
-    syncedWithAppwrite: validationResult?.syncedWithAppwrite ?? false
+    syncedWithAppwrite: validationResult?.syncedWithAppwrite ?? false,
+    appwriteListenerActive: isListening
   };
 };
