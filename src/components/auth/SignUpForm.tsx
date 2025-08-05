@@ -13,6 +13,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSelector } from "react-redux";
 import PlanPicker from "./PlanPicker";
 
+
 interface AuthState {
   auth: {
     authenticated: boolean;

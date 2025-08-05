@@ -1,9 +1,39 @@
 import { appwriteCreds } from "@/redux/appwrite/appwriteCreds";
 import { NextResponse } from "next/server";
+import { account } from "@/redux/appwrite/config";
 
 export async function POST(req: Request) {
   const { name, email, password, plan, plan_id, user_name, userAlreadyExists, subscriptionId, on_free_trial } = await req.json();
   
+    const handleSendTeamInvite = async () => {
+      try {
+        const user = await account.get();
+        const res = await fetch("/api/users/activate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            email: user.email,
+            name: user.name
+          })
+        });
+        if (res.ok) {
+          console.error("You have been verified. An email will be sent to you in the next five working days, for now you can continue using the system.", 
+            {
+              duration: 5000
+            }
+          );
+        }
+        else {
+          const errorData = await res.json();
+          console.error("Error sending team invite:", errorData);
+        }
+      } catch (error) {
+        console.error("Failed to send team invite", error);
+      }
+    };
+
   if (!userAlreadyExists) {
     if (!name || !email || !password || !plan) {
       console.error("Missing required fields");
@@ -34,8 +64,30 @@ export async function POST(req: Request) {
       }
 
       const createdUser = await userRes.json();
+
+      const teamId = process.env.APPWRITE_TEAM_ID || "your-team-id";
+      try {
+        const teamInviteRes = await fetch(`${appwriteCreds.apiUrl}/teams/${teamId}/memberships`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Appwrite-Project": appwriteCreds.projectId || "",
+            "X-Appwrite-Key": appwriteCreds.apiKey || "",
+          },
+          body: JSON.stringify({
+            email: createdUser.email,
+            roles: ["member"],
+            url: process.env.NEXT_PUBLIC_REDIRECT_URL || "https://shsoftwares.com/verify-team-invite"
+          }),
+        });
+        if (!teamInviteRes.ok) {
+          const err = await teamInviteRes.json();
+          console.error("Appwrite team invite error", err);
+        }
+      } catch (err) {
+        console.error("Failed to add user to team", err);
+      }
        
-    // 2️⃣ Create Subscription Document
     const subRes = await fetch(`${appwriteCreds.apiUrl}/databases/${appwriteCreds.databaseId}/collections/${appwriteCreds.subscription_collection_id}/documents`, {
       method: "POST",
       headers: {

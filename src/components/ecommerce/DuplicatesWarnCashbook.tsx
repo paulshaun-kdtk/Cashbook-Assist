@@ -7,8 +7,7 @@ import { useRouter } from "next/navigation";
 import { checkSessionThunk } from "@/redux/auth/authThunks";
 import toast from "react-hot-toast";
 import { account, teams } from "@/redux/appwrite/config";
-import { fetchAccountsThunk, fetchCashbookAccountsThunk } from "@/redux/api/thunks/accounts/fetch";
-import { fetchIncomeSourcesThunk } from "@/redux/api/thunks/income_sources/fetch";
+import { fetchCashbookAccountsThunk } from "@/redux/api/thunks/accounts/fetch";
 
 export default function DuplicatesWarnBannerCashbook() {
   const duplicates = useSelector(selectDuplicates);
@@ -115,7 +114,7 @@ export default function DuplicatesWarnBannerCashbook() {
         <Alert
           variant="error"
           title="Action required!"
-          message="Looks like your email is not verified. Click here for our system to automatically verify you, you won't be able to interact with the system without continuing."
+          message="Looks like your user is not yet verified. Click here for our system to automatically verify you, you won't be able to interact with the system without continuing."
           showLink={true}
           linkText="Verify email"
           onClickLink={handleSendTeamInvite}
