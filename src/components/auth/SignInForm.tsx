@@ -72,13 +72,10 @@ export default function SignInForm() {
     const checkExistingSession = async () => {
       setCheckingSession(true);
       try {
-        // Check if there's an existing session
         // @ts-expect-error - Redux toolkit dispatch typing issue
         await dispatch(checkSessionThunk()).unwrap();
-        // If successful, user will be redirected by the authenticated check below
         toast.success("Welcome back! Redirecting...");
       } catch {
-        // No existing session, continue with normal sign-in flow
         console.log("No existing session found");
       } finally {
         setCheckingSession(false);
