@@ -167,8 +167,9 @@ export const sessionAwareSubscriptionService = {
     subscription_status: 'active' | 'pending' | 'cancelled' | 'expired';
     subscription_type?: string;
     subscription_plan_id?: string;
+    subscription_id?: string;
     payment_platform?: string;
-    notes?: string;
+    subscription_platform?: string;
   }) {
     try {
       console.log('🔧 Updating Appwrite subscription for:', userEmail, subscriptionData);
@@ -186,11 +187,13 @@ export const sessionAwareSubscriptionService = {
       const updateData = {
         user: userEmail.toLowerCase().trim(),
         subscription_status: subscriptionData.subscription_status,
-        subscription_type: subscriptionData.subscription_type || 'manual',
+        subscription_type: subscriptionData.subscription_type || 'annual',
         subscription_plan_id: subscriptionData.subscription_plan_id || 'manual_premium',
+        subscription_id: subscriptionData.subscription_id || 'manual_id',
         payment_platform: subscriptionData.payment_platform || 'manual_admin',
-        notes: subscriptionData.notes || 'Manually managed subscription',
-        $updatedAt: new Date().toISOString()
+        subscription_platform: subscriptionData.subscription_platform || 'ios',
+        has_user_created: true,
+        which_key: userEmail.toLowerCase().trim()
       };
 
       if (result.documents.length > 0) {

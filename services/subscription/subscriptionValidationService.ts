@@ -147,8 +147,8 @@ export class SubscriptionValidationService {
       // Get current customer info from RevenueCat
       const customerInfo = await Purchases.getCustomerInfo();
       
-      // Check if user has active premium entitlements
-      const hasActiveSubscription = customerInfo.entitlements.active.premium !== undefined;
+      // Check if user has any active entitlements (not just premium)
+      const hasActiveSubscription = Object.keys(customerInfo.entitlements.active).length > 0;
       
       console.log('RevenueCat subscription status:', {
         hasActiveSubscription,
@@ -164,9 +164,11 @@ export class SubscriptionValidationService {
       } else {
         // Check if there are any expired entitlements that were recently cancelled
         const allEntitlements = customerInfo.entitlements.all;
-        if (allEntitlements.premium) {
-          const premiumEntitlement = allEntitlements.premium;
-          const expirationDate = new Date(premiumEntitlement.expirationDate || '');
+        const firstEntitlementKey = Object.keys(allEntitlements)[0];
+        
+        if (firstEntitlementKey && allEntitlements[firstEntitlementKey]) {
+          const entitlement = allEntitlements[firstEntitlementKey];
+          const expirationDate = new Date(entitlement.expirationDate || '');
           const now = new Date();
           
           // If expired recently (within last 24 hours), mark as cancelled

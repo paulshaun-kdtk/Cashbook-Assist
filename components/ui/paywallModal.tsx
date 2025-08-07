@@ -1,9 +1,10 @@
 import { useToast } from '@/hooks/useToast';
 import { RootState } from '@/redux/store';
-import { subscriptionAPIService } from '@/services/subscription/subscriptionAPIService';
+import { sessionAwareSubscriptionService } from '@/services/subscription/sessionAwareSubscriptionService';
 import { Ionicons } from '@expo/vector-icons';
+import * as Updates from 'expo-updates';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Modal, ScrollView, Text, TouchableOpacity, View, useColorScheme } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Modal, ScrollView, Text, TouchableOpacity, View, useColorScheme } from 'react-native';
 import Purchases, { PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
 import { useSelector } from 'react-redux';
 
@@ -25,6 +26,43 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [showMockPlans, setShowMockPlans] = useState(false);
+
+  // Function to restart the app after successful purchase
+  const restartApp = async () => {
+    try {
+      // Check if Updates is available (in Expo managed apps)
+      if (Updates.reloadAsync) {
+        await Updates.reloadAsync();
+      } else {
+        // Fallback for development or if Updates is not available
+        Alert.alert(
+          'Restart Required',
+          'Please close and reopen the app to activate your premium features.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.log('Could not restart app automatically:', error);
+      Alert.alert(
+        'Restart Required',
+        'Please close and reopen the app to activate your premium features.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  // Function to open Apple's subscription terms
+  const openSubscriptionTerms = () => {
+    const appleTermsUrl = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
+    Linking.openURL(appleTermsUrl).catch(err => {
+      console.error('Failed to open Apple subscription terms:', err);
+      Alert.alert(
+        'Terms and Conditions',
+        'By purchasing a subscription, you agree to Apple\'s Terms and Conditions and acknowledge that subscriptions auto-renew unless cancelled at least 24 hours before the end of the current period.',
+        [{ text: 'OK' }]
+      );
+    });
+  };
 
   // Mock plans for development/fallback
   const mockPlans = [
@@ -157,42 +195,70 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
 
   const handleMockPurchase = async (mockPlan: any) => {
     try {
-      setPurchasing(mockPlan.identifier);
-      console.log('Mock purchase for development:', mockPlan.identifier);
-      
-      // Simulate a small delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Update Appwrite subscription status for mock purchase
-      if ((user as any)?.email) {
-        console.log('Updating Appwrite subscription for mock purchase:', (user as any).email);
-        
-        const subscriptionUpdateResult = await subscriptionAPIService.upsertSubscription(
-          (user as any).email,
-          (user as any).name || (user as any).email,
-          {
-            subscription_status: 'active',
-            subscription_type: 'premium',
-            subscription_plan_id: mockPlan.identifier,
-            subscription_id: `mock_${Date.now()}`,
-            payment_platform: 'revenue_cat'
-          }
-        );
-
-        if (subscriptionUpdateResult.success) {
-          console.log('Mock subscription updated successfully');
-        } else {
-          console.error('Failed to update mock subscription:', subscriptionUpdateResult.message);
-        }
+      // Check if user is authenticated before proceeding
+      if (!user || !(user as any)?.email) {
+        showToast({
+          type: 'error',
+          text1: 'Authentication Required',
+          text2: 'Please log in to purchase a subscription'
+        });
+        return;
       }
 
-      showToast({
-        type: 'success',
-        text1: 'Demo Purchase Successful!',
-        text2: 'This is a demo transaction - no real payment was processed'
-      });
-      onPurchaseSuccess?.();
-      onClose();
+      // Show confirmation with terms
+      Alert.alert(
+        'Confirm Subscription',
+        `Subscribe to ${mockPlan.storeProduct.title} for ${mockPlan.storeProduct.priceString}?\n\nThis is a demo purchase. By continuing, you agree to Apple's Terms and Conditions.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Subscribe', 
+            onPress: async () => {
+              setPurchasing(mockPlan.identifier);
+              console.log('Mock purchase for development:', mockPlan.identifier);
+              
+              // Simulate a small delay
+              await new Promise(resolve => setTimeout(resolve, 1500));
+              
+              // Update Appwrite subscription status for mock purchase - user already validated above
+              console.log('Updating Appwrite subscription for mock purchase:', (user as any).email);
+              
+              const subscriptionUpdateResult = await sessionAwareSubscriptionService.updateAppwriteSubscription(
+                (user as any).email,
+                {
+                  subscription_status: 'active',
+                  subscription_type: mockPlan.packageType === 'MONTHLY' ? 'monthly' : 'annual',
+                  subscription_plan_id: mockPlan.identifier,
+                  subscription_id: `mock_${Date.now()}`, // Required field
+                  payment_platform: 'revenue_cat',
+                  subscription_platform: 'ios'
+                }
+              );
+
+              if (subscriptionUpdateResult.success) {
+                console.log('Mock subscription updated successfully');
+              } else {
+                console.error('Failed to update mock subscription:', subscriptionUpdateResult.message);
+              }
+
+              showToast({
+                type: 'success',
+                text1: 'Demo Purchase Successful!',
+                text2: 'This is a demo transaction - no real payment was processed'
+              });
+              onPurchaseSuccess?.();
+              onClose();
+              
+              // Restart app to reflect changes
+              setTimeout(() => {
+                restartApp();
+              }, 1000);
+              
+              setPurchasing(null);
+            }
+          }
+        ]
+      );
     } catch (error: any) {
       console.error('Mock purchase failed:', error);
       showToast({
@@ -200,59 +266,144 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
         text1: 'Demo Purchase Failed',
         text2: error.message || 'Please try again'
       });
-    } finally {
       setPurchasing(null);
     }
   };
 
   const handlePurchase = async (packageToPurchase: PurchasesPackage) => {
     try {
+      // Check if user is authenticated before proceeding
+      if (!user || !(user as any)?.email) {
+        showToast({
+          type: 'error',
+          text1: 'Authentication Required',
+          text2: 'Please log in to purchase a subscription'
+        });
+        return;
+      }
+
+      // Show confirmation with terms
+      const subscriptionPeriod = packageToPurchase.product.subscriptionPeriod === 'P1M' ? 'monthly' : 'yearly';
+      Alert.alert(
+        'Confirm Subscription',
+        `Subscribe to ${packageToPurchase.product.title} for ${packageToPurchase.product.priceString} (${subscriptionPeriod})?\n\nBy continuing, you agree to Apple's Terms and Conditions. Subscription will auto-renew unless cancelled.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Subscribe', 
+            onPress: async () => {
+              await performPurchase(packageToPurchase);
+            }
+          }
+        ]
+      );
+    } catch (error: any) {
+      console.error('Purchase confirmation failed:', error);
+      showToast({
+        type: 'error',
+        text1: 'Purchase Failed',
+        text2: error.message || 'Please try again'
+      });
+    }
+  };
+
+  const performPurchase = async (packageToPurchase: PurchasesPackage) => {
+    try {
+
       setPurchasing(packageToPurchase.identifier);
       console.log('Attempting to purchase:', packageToPurchase.identifier);
       
       const { customerInfo } = await Purchases.purchasePackage(packageToPurchase);
       console.log('Purchase successful:', customerInfo);
+      console.log('Available entitlements:', Object.keys(customerInfo.entitlements.active));
+      console.log('All entitlements (including inactive):', Object.keys(customerInfo.entitlements.all));
       
-      if (customerInfo.entitlements.active.premium) {
-        // Update Appwrite subscription status
-        if ((user as any)?.email) {
-          console.log('Updating Appwrite subscription for user:', (user as any).email);
-          
-          const subscriptionUpdateResult = await subscriptionAPIService.upsertSubscription(
-            (user as any).email,
-            (user as any).name || (user as any).email, // Use name or fallback to email for username
-            {
-              subscription_status: 'active',
-              subscription_type: 'premium',
-              subscription_plan_id: packageToPurchase.identifier,
-              subscription_id: customerInfo.originalAppUserId,
-              payment_platform: 'revenue_cat'
-            }
-          );
+      // Check for any active entitlement (premium, pro, or any other)
+      // RevenueCat entitlements might be named differently than 'premium'
+      let hasEntitlement = Object.keys(customerInfo.entitlements.active).length > 0;
+      let activeEntitlementName = Object.keys(customerInfo.entitlements.active)[0] || null;
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      // If entitlement not immediately available, retry with fresh customer info
+      while (!hasEntitlement && retryCount < maxRetries) {
+        console.log(`Entitlement not found, retrying... (${retryCount + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+        
+        const freshCustomerInfo = await Purchases.getCustomerInfo();
+        console.log('Fresh customer info entitlements:', Object.keys(freshCustomerInfo.entitlements.active));
+        hasEntitlement = Object.keys(freshCustomerInfo.entitlements.active).length > 0;
+        if (hasEntitlement) {
+          activeEntitlementName = Object.keys(freshCustomerInfo.entitlements.active)[0];
+        }
+        retryCount++;
+      }
+      
+      if (hasEntitlement) {
+        // Update Appwrite subscription status - user already validated above
+        console.log('Updating Appwrite subscription for user:', (user as any).email);
+        console.log('Active entitlement found:', activeEntitlementName);
+        
+        const subscriptionUpdateResult = await sessionAwareSubscriptionService.updateAppwriteSubscription(
+          (user as any).email,
+          {
+            subscription_status: 'active',
+            subscription_type: packageToPurchase.product.subscriptionPeriod === 'P1M' ? 'monthly' : 'annual',
+            subscription_plan_id: packageToPurchase.identifier,
+            subscription_id: customerInfo.originalAppUserId,
+            payment_platform: 'revenue_cat',
+            subscription_platform: 'ios'
+          }
+        );
 
           if (subscriptionUpdateResult.success) {
             console.log('Appwrite subscription updated successfully');
+            showToast({
+              type: 'success',
+              text1: 'Subscription Activated!',
+              text2: 'Welcome to Cashbook Assist Premium'
+            });
+            onPurchaseSuccess?.();
+            onClose();
+            
+            setTimeout(() => {
+              restartApp();
+            }, 1000);
           } else {
             console.error('Failed to update Appwrite subscription:', subscriptionUpdateResult.message);
-            // Don't fail the purchase flow, but log the error
+            // Purchase was successful but Appwrite update failed
+            showToast({
+              type: 'info',
+              text1: 'Purchase Successful',
+              text2: 'Please restart the app to activate premium features'
+            });
+            onPurchaseSuccess?.();
+            onClose();
           }
-        } else {
-          console.error('No user email available for subscription update');
-        }
-
+      } else {
+        // Purchase was successful but entitlement not found after retries
+        console.error('Purchase successful but no premium entitlement found after retries');
         showToast({
-          type: 'success',
-          text1: 'Subscription Activated!',
-          text2: 'Welcome to Cashbook Assist Premium'
+          type: 'info',
+          text1: 'Purchase Completed',
+          text2: 'Please restart the app or contact support if premium features are not available'
         });
+        
+        // Still try to update Appwrite with purchase info for manual review
+        await sessionAwareSubscriptionService.updateAppwriteSubscription(
+          (user as any).email,
+          {
+            subscription_status: 'pending', // Use pending status for manual review
+            subscription_type: packageToPurchase.product.subscriptionPeriod === 'P1M' ? 'monthly' : 'annual',
+            subscription_plan_id: packageToPurchase.identifier,
+            subscription_id: customerInfo.originalAppUserId,
+            payment_platform: 'revenue_cat',
+            subscription_platform: 'ios'
+          }
+        );
+        
         onPurchaseSuccess?.();
         onClose();
-      } else {
-        showToast({
-          type: 'error',
-          text1: 'Purchase completed but premium not activated',
-          text2: 'Please contact support if this persists'
-        });
       }
     } catch (error: any) {
       console.error('Purchase failed:', error);
@@ -274,44 +425,83 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
 
   const handleRestore = async () => {
     try {
+      // Check if user is authenticated before proceeding
+      if (!user || !(user as any)?.email) {
+        showToast({
+          type: 'error',
+          text1: 'Authentication Required',
+          text2: 'Please log in to restore purchases'
+        });
+        return;
+      }
+
       setLoading(true);
       const customerInfo = await Purchases.restorePurchases();
       console.log('Restore result:', customerInfo);
+      console.log('Available entitlements after restore:', Object.keys(customerInfo.entitlements.active));
+      console.log('All entitlements after restore (including inactive):', Object.keys(customerInfo.entitlements.all));
       
-      if (customerInfo.entitlements.active.premium) {
-        // Update Appwrite subscription status
-        if ((user as any)?.email) {
-          console.log('Updating Appwrite subscription after restore for user:', (user as any).email);
-          
-          const subscriptionUpdateResult = await subscriptionAPIService.upsertSubscription(
-            (user as any).email,
-            (user as any).name || (user as any).email,
-            {
-              subscription_status: 'active',
-              subscription_type: 'premium',
-              subscription_plan_id: 'restored_purchase',
-              subscription_id: customerInfo.originalAppUserId,
-              payment_platform: 'revenue_cat'
-            }
-          );
+      // Check for any active entitlement with retry mechanism
+      let hasEntitlement = Object.keys(customerInfo.entitlements.active).length > 0;
+      let activeEntitlementName = Object.keys(customerInfo.entitlements.active)[0] || null;
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      // If entitlement not immediately available, retry with fresh customer info
+      while (!hasEntitlement && retryCount < maxRetries) {
+        console.log(`Entitlement not found after restore, retrying... (${retryCount + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+        
+        const freshCustomerInfo = await Purchases.getCustomerInfo();
+        console.log('Fresh customer info entitlements after restore:', Object.keys(freshCustomerInfo.entitlements.active));
+        hasEntitlement = Object.keys(freshCustomerInfo.entitlements.active).length > 0;
+        if (hasEntitlement) {
+          activeEntitlementName = Object.keys(freshCustomerInfo.entitlements.active)[0];
+        }
+        retryCount++;
+      }
+      
+      if (hasEntitlement) {
+        // Update Appwrite subscription status - user already validated above
+        console.log('Updating Appwrite subscription after restore for user:', (user as any).email);
+        console.log('Active entitlement found after restore:', activeEntitlementName);
+        
+        const subscriptionUpdateResult = await sessionAwareSubscriptionService.updateAppwriteSubscription(
+          (user as any).email,
+          {
+            subscription_status: 'active',
+            subscription_type: 'annual', // Default to annual for restored purchases
+            subscription_plan_id: 'restored_purchase',
+            subscription_id: customerInfo.originalAppUserId,
+            payment_platform: 'revenue_cat',
+            subscription_platform: 'ios'
+          }
+        );
 
           if (subscriptionUpdateResult.success) {
             console.log('Appwrite subscription updated successfully after restore');
+            showToast({
+              type: 'success',
+              text1: 'Subscription Restored!',
+              text2: 'Your premium features have been restored'
+            });
+            onPurchaseSuccess?.();
+            onClose();
+            
+            // Restart app to reflect changes
+            setTimeout(() => {
+              restartApp();
+            }, 1000);
           } else {
             console.error('Failed to update Appwrite subscription after restore:', subscriptionUpdateResult.message);
-            // Don't fail the restore flow, but log the error
+            showToast({
+              type: 'info',
+              text1: 'Subscription Found',
+              text2: 'Please restart the app to activate premium features'
+            });
+            onPurchaseSuccess?.();
+            onClose();
           }
-        } else {
-          console.error('No user email available for subscription update during restore');
-        }
-
-        showToast({
-          type: 'success',
-          text1: 'Subscription Restored!',
-          text2: 'Your premium features have been restored'
-        });
-        onPurchaseSuccess?.();
-        onClose();
       } else {
         showToast({
           type: 'info',
@@ -471,12 +661,12 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
                   <TouchableOpacity
                     key={mockPlan.identifier}
                     onPress={() => handleMockPurchase(mockPlan)}
-                    disabled={purchasing === mockPlan.identifier}
+                    disabled={purchasing === mockPlan.identifier || !user || !(user as any)?.email}
                     className={`mb-4 p-4 rounded-xl border-2 ${
                       isPopular 
                         ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20' 
                         : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
-                    }`}
+                    } ${purchasing === mockPlan.identifier || !user || !(user as any)?.email ? 'opacity-50' : ''}`}
                   >
                     {isPopular && (
                       <View className="absolute -top-2 left-4 bg-cyan-500 px-3 py-1 rounded-full">
@@ -530,12 +720,12 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
                   <TouchableOpacity
                     key={packageItem.identifier}
                     onPress={() => handlePurchase(packageItem)}
-                    disabled={purchasing === packageItem.identifier}
+                    disabled={purchasing === packageItem.identifier || !user || !(user as any)?.email}
                     className={`mb-4 p-4 rounded-xl border-2 ${
                       isPopular 
                         ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20' 
                         : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
-                    }`}
+                    } ${purchasing === packageItem.identifier || !user || !(user as any)?.email ? 'opacity-50' : ''}`}
                   >
                     {isPopular && (
                       <View className="absolute -top-2 left-4 bg-cyan-500 px-3 py-1 rounded-full">
@@ -590,11 +780,23 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
 
         {/* Footer */}
         <View className="p-6 border-t border-gray-200 dark:border-gray-700">
+          {/* Terms and Conditions */}
+          <View className="mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <Text className="text-xs text-gray-600 dark:text-gray-400 text-center mb-2">
+              By continuing, you agree to Apple&apos;s Paid App Terms
+            </Text>
+            <TouchableOpacity onPress={openSubscriptionTerms}>
+              <Text className="text-xs text-blue-600 dark:text-blue-400 text-center underline">
+                View Apple&apos;s Terms & Conditions
+              </Text>
+            </TouchableOpacity>
+          </View>
+          
           {!showMockPlans && (
             <TouchableOpacity
               onPress={handleRestore}
-              disabled={loading}
-              className="mb-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg"
+              disabled={loading || !user || !(user as any)?.email}
+              className={`mb-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg ${loading || !user || !(user as any)?.email ? 'opacity-50' : ''}`}
             >
               <Text className="text-center text-gray-700 dark:text-gray-300 font-medium">
                 Restore Previous Purchase
@@ -617,7 +819,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
           <Text className="text-xs text-gray-500 dark:text-gray-400 text-center">
             {showMockPlans 
               ? 'Demo mode - No real payments will be processed'
-              : 'Subscriptions auto-renew. Cancel anytime in App Store settings.'
+              : 'Subscriptions auto-renew unless cancelled at least 24 hours before the end of the current period. You can manage and cancel subscriptions in your App Store account settings.'
             }
           </Text>
         </View>

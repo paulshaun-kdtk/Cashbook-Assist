@@ -4,66 +4,18 @@ import { confirmUserName } from '@/redux/appwrite/auth/userActions';
 import { appwriteCreds } from '@/redux/appwrite/credentials';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import * as WebBrowser from 'expo-web-browser';
+import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import Purchases, {
-    PACKAGE_TYPE,
-    PurchasesPackage
-} from 'react-native-purchases';
 import { ThemedText } from '../ThemedText';
-
-interface SubscriptionPlan {
-  id: string;
-  title: string;
-  description: string;
-  price: string;
-  originalPrice?: string;
-  features: string[];
-  popular?: boolean;
-  packageType?: PACKAGE_TYPE;
-  rcPackage?: PurchasesPackage;
-}
-
-// Free tier plan (always available)
-const freePlan: SubscriptionPlan = {
-  id: 'free',
-  title: 'Free',
-  description: 'Perfect for getting started',
-  price: 'Free',
-  features: [
-    '1 company',
-    '1 cashbook',
-    'limited to 1000 transactions',
-    'Advanced transaction tracking',
-    'AI-powered insights',
-    'Smart category suggestions',
-    'Advanced reports & analytics',
-    'Export to PDF & Excel',
-  ],
-};
-
-// Premium features for paid plans
-const premiumFeatures = [
-  'Unlimited cashbooks',
-  'Advanced transaction tracking',
-  'AI-powered insights',
-  'Smart category suggestions',
-  'Advanced reports & analytics',
-  'Multi-currency support',
-  'Export to PDF & Excel',
-];
-
-const annualBonusFeatures = [
-    'priority support',
-];
 
 export default function SubscriptionSignupScreen() {
   const theme = useColorScheme();
@@ -76,112 +28,9 @@ export default function SubscriptionSignupScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [checkingUsername, setCheckingUsername] = useState(false);
-        const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
-        
-  // Subscription state
-  const [selectedPlan, setSelectedPlan] = useState<string>('free');
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingSubscriptions, setIsLoadingSubscriptions] = useState(true);
-  const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
-
-  useEffect(() => {
-    const loadOfferingsAsync = async () => {
-      try {
-        setIsLoadingSubscriptions(true);
-        const plans: SubscriptionPlan[] = [freePlan];
-
-        // Try to load RevenueCat offerings
-        const offerings = await Purchases.getOfferings();
-        
-        if (offerings.current && offerings.current.availablePackages.length > 0) {
-          // Create subscription plans from RevenueCat packages
-          offerings.current.availablePackages.forEach((rcPackage, index) => {
-            if (rcPackage.packageType === PACKAGE_TYPE.MONTHLY) {
-              plans.push({
-                id: `pro_monthly_${rcPackage.identifier}`,
-                title: 'Pro Monthly',
-                description: 'For growing businesses',
-                price: rcPackage.product.priceString,
-                features: premiumFeatures,
-                popular: true,
-                packageType: PACKAGE_TYPE.MONTHLY,
-                rcPackage,
-              });
-            } else if (rcPackage.packageType === PACKAGE_TYPE.ANNUAL) {
-              // Calculate potential savings for annual plan
-              const monthlyPackage = offerings.current?.availablePackages.find(
-                pkg => pkg.packageType === PACKAGE_TYPE.MONTHLY
-              );
-              let originalPrice: string | undefined;
-              
-              if (monthlyPackage) {
-                const monthlyPrice = monthlyPackage.product.price;
-                const annualEquivalent = monthlyPrice * 12;
-                const currentAnnualPrice = rcPackage.product.price;
-                const savings = Math.round(((annualEquivalent - currentAnnualPrice) / annualEquivalent) * 100);
-                
-                if (savings > 0) {
-                  originalPrice = `$${annualEquivalent.toFixed(2)}/year`;
-                }
-              }
-
-              plans.push({
-                id: `pro_annual_${rcPackage.identifier}`,
-                title: 'Pro Annual',
-                description: 'Best value for committed users',
-                price: rcPackage.product.priceString,
-                originalPrice,
-                features: [
-                  ...premiumFeatures,
-                  originalPrice ? `Save money vs monthly` : 'Best value option',
-                  ...annualBonusFeatures,
-                ],
-                packageType: PACKAGE_TYPE.ANNUAL,
-                rcPackage,
-              });
-            }
-          });
-        }
-
-        // If no RevenueCat packages found, add fallback plans
-        if (plans.length === 1) {
-          console.log('No RevenueCat packages found, using fallback plans');
-          plans.push(
-            {
-              id: 'pro_monthly_fallback',
-              title: 'Pro Monthly',
-              description: 'For growing businesses',
-              price: 'Contact Support',
-              features: premiumFeatures,
-              popular: true,
-            },
-            {
-              id: 'pro_annual_fallback',
-              title: 'Pro Annual',
-              description: 'Best value for committed users',
-              price: 'Contact Support',
-              features: [
-                ...premiumFeatures,
-                'Best value option',
-                ...annualBonusFeatures,
-              ],
-            }
-          );
-        }
-
-        setSubscriptionPlans(plans);
-      } catch (error) {
-        console.log('Error loading subscription offerings:', error);
-        // Fallback to free plan only if there's an error
-        setSubscriptionPlans([freePlan]);
-      } finally {
-        setIsLoadingSubscriptions(false);
-      }
-    };
-
-    loadOfferingsAsync();
-  }, []);
 
   const validateForm = (): boolean => {
     if (!email.trim()) {
@@ -339,19 +188,19 @@ export default function SubscriptionSignupScreen() {
     }
   };
 
-  const createSubscriptionDocument = async (userId: string, subscriptionData: any) => {
+  const createSubscriptionDocument = async (userId: string) => {
     try {
       const subscriptionPayload = {
         documentId: 'unique()',
         data: {
           user: email.toLowerCase().trim(),
           has_user_created: true,
-          subscription_status: subscriptionData.status,
-          subscription_type: subscriptionData.type,
+          subscription_status: 'pending',
+          subscription_type: 'annual', 
           subscription_platform: Platform.OS,
           payment_platform: 'revenue_cat',
-          subscription_plan_id: subscriptionData.planId,
-          subscription_id: subscriptionData.subscriptionId || 'to-be-set',
+          subscription_plan_id: 'free',
+          subscription_id: 'free-trial',
           which_key: username.toLowerCase().trim(),
         },
       };
@@ -381,84 +230,20 @@ export default function SubscriptionSignupScreen() {
     }
   };
 
-  const handleFreeTierSignup = async () => {
-    try {
-      // Create user in Appwrite
-      const user = await createAppwriteUser();
-      
-      // Create free subscription document
-      await createSubscriptionDocument(user.$id, {
-        status: 'pending',
-        type: 'annual', 
-        planId: 'free',
-        subscriptionId: 'free-trial',
-      });
-
-      showToast({ type: 'success', text1: 'Account created successfully!', text2: 'Welcome to your free trial.' });
-      router.replace('/auth/signin');
-    } catch (error: any) {
-      console.error('Free signup error:', error);
-      showToast({ type: 'error', text1: error.message || 'Failed to create account' });
-    }
-  };
-
-  const handlePaidSubscription = async (plan: SubscriptionPlan) => {
-    try {
-      if (!plan.rcPackage) {
-        throw new Error('Subscription package not available');
-      }
-
-      // Make the purchase
-      const purchaseResult = await Purchases.purchasePackage(plan.rcPackage);
-      const customerInfo = purchaseResult.customerInfo;
-
-      // Create user in Appwrite
-      const user = await createAppwriteUser();
-
-      // Create subscription document with RevenueCat data
-      await createSubscriptionDocument(user.$id, {
-        status: 'active',
-        type: plan.packageType === PACKAGE_TYPE.MONTHLY ? 'monthly' : 'annual',
-        planId: plan.id,
-        subscriptionId: customerInfo.originalAppUserId || `rc-${Date.now()}`,
-      });
-
-      showToast({ type: 'success', text1: 'Subscription activated successfully!' });
-      router.replace('/auth/signin');
-    } catch (error: any) {
-      console.error('Paid subscription error:', error);
-      if (!error.userCancelled) {
-        showToast({ type: 'error', text1: error.message || 'Failed to process subscription' });
-      }
-    }
-  };
-
   const handleSignUp = async () => {
     if (!validateForm()) return;
 
     setIsLoading(true);
 
     try {
-      const selectedPlanData = subscriptionPlans.find(plan => plan.id === selectedPlan);
+      // Create user in Appwrite
+      const user = await createAppwriteUser();
       
-      if (!selectedPlanData) {
-        throw new Error('Please select a subscription plan');
-      }
+      // Create free subscription document
+      await createSubscriptionDocument(user.$id);
 
-      if (selectedPlan === 'free') {
-        await handleFreeTierSignup();
-      } else {
-        // Check if this is a fallback plan (no RevenueCat package)
-        if (!selectedPlanData.rcPackage) {
-          showToast({ 
-            type: 'error', 
-            text1: 'Subscription unavailable', 
-            text2: 'Please contact support or try the free plan' 
-          });
-          return;
-        }
-        await handlePaidSubscription(selectedPlanData);
-      }
+      showToast({ type: 'success', text1: 'Account created successfully!', text2: 'Welcome to your account.' });
+      router.replace('/auth/signin');
     } catch (error: any) {
       console.error('Signup error:', error);
       showToast({ type: 'error', text1: error.message || 'Failed to create account' });
@@ -483,97 +268,15 @@ export default function SubscriptionSignupScreen() {
           setCheckingUsername(false);
         }
       }
-  
-
-  const renderSubscriptionPlan = (plan: SubscriptionPlan) => (
-    <TouchableOpacity
-      key={plan.id}
-      className={`p-4 rounded-xl border-2 mb-4 ${
-        selectedPlan === plan.id
-          ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20'
-          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
-      } ${plan.popular ? 'ring-2 ring-cyan-200 dark:ring-cyan-800' : ''}`}
-      onPress={() => setSelectedPlan(plan.id)}
-      disabled={!plan.rcPackage && plan.id !== 'free'}
-    >
-      <View className="flex-row justify-between items-start mb-2">
-        <View className="flex-1">
-          <View className="flex-row items-center">
-            <ThemedText className="text-lg font-bold">{plan.title}</ThemedText>
-            {plan.popular && (
-              <View className="ml-2 px-2 py-1 bg-cyan-500 rounded-full">
-                <Text className="text-white text-xs font-bold">POPULAR</Text>
-              </View>
-            )}
-            {!plan.rcPackage && plan.id !== 'free' && (
-              <View className="ml-2 px-2 py-1 bg-gray-400 rounded-full">
-                <Text className="text-white text-xs font-bold">UNAVAILABLE</Text>
-              </View>
-            )}
-          </View>
-          <ThemedText className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            {plan.description}
-          </ThemedText>
-        </View>
-        <View className="items-end">
-          <ThemedText className={`text-xl font-bold ${
-            !plan.rcPackage && plan.id !== 'free' 
-              ? 'text-gray-400 dark:text-gray-500' 
-              : 'text-cyan-600 dark:text-cyan-400'
-          }`}>
-            {plan.price}
-          </ThemedText>
-          {plan.originalPrice && (
-            <ThemedText className="text-sm text-gray-500 line-through">
-              {plan.originalPrice}
-            </ThemedText>
-          )}
-        </View>
-      </View>
-
-      <View className="mt-3">
-        {plan.features.map((feature, index) => (
-          <View key={index} className="flex-row items-center mb-1">
-            <Ionicons
-              name="checkmark-circle"
-              size={16}
-              color={theme === 'dark' ? '#06B6D4' : '#0891B2'}
-            />
-            <ThemedText className={`text-sm ml-2 ${
-              !plan.rcPackage && plan.id !== 'free'
-                ? 'text-gray-400 dark:text-gray-500'
-                : 'text-gray-700 dark:text-gray-300'
-            }`}>
-              {feature}
-            </ThemedText>
-          </View>
-        ))}
-      </View>
-
-      <View className="absolute top-4 right-4">
-        <View className={`w-6 h-6 rounded-full border-2 ${
-          selectedPlan === plan.id
-            ? 'border-cyan-500 bg-cyan-500'
-            : 'border-gray-300 dark:border-gray-600'
-        } items-center justify-center ${
-          !plan.rcPackage && plan.id !== 'free' ? 'opacity-50' : ''
-        }`}>
-          {selectedPlan === plan.id && (
-            <Ionicons name="checkmark" size={16} color="white" />
-          )}
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
 
   return (
     <View className="flex-1 bg-gray-50 dark:bg-gray-900">
-      <ScrollView className="flex-1 px-6 pt-16">
+      <ScrollView className="flex-1 px-6 pt-16" contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Header */}
         <View className="items-center mb-8">
           <ThemedText className="text-3xl font-bold mb-2">Create Account</ThemedText>
           <ThemedText className="text-gray-600 dark:text-gray-400 text-center">
-            Choose your plan and start managing your cashbooks
+            Sign up to start managing your cashbooks
           </ThemedText>
         </View>
 
@@ -689,23 +392,7 @@ export default function SubscriptionSignupScreen() {
           </View>
         </View>
 
-        {/* Subscription Plans */}
-        <View className="mb-8">
-          <ThemedText className="text-lg font-semibold mb-4">Choose Your Plan</ThemedText>
-          
-          {isLoadingSubscriptions ? (
-            <View className="items-center py-8">
-              <ActivityIndicator size="large" color="#06B6D4" />
-              <ThemedText className="mt-2 text-gray-600 dark:text-gray-400">
-                Loading subscription plans...
-              </ThemedText>
-            </View>
-          ) : (
-            subscriptionPlans.map(plan => renderSubscriptionPlan(plan))
-          )}
-        </View>
-
-        {/* Sign Up Button */}
+        {/* Create Account Button */}
         <TouchableOpacity
           className={`w-full p-4 rounded-xl items-center justify-center shadow-md mb-4 ${
             isLoading
@@ -713,7 +400,7 @@ export default function SubscriptionSignupScreen() {
               : 'bg-cyan-700 dark:bg-cyan-600'
           }`}
           onPress={handleSignUp}
-          disabled={isLoading || isLoadingSubscriptions || !usernameAvailable}
+          disabled={isLoading || !usernameAvailable}
         >
           {isLoading ? (
             <View className="flex-row items-center">
@@ -722,14 +409,24 @@ export default function SubscriptionSignupScreen() {
             </View>
           ) : (
             <Text className="text-white text-lg font-bold">
-              {selectedPlan === 'free' ? 'Start Free Trial' : 'Subscribe & Create Account'}
+              Create Account
             </Text>
           )}
         </TouchableOpacity>
 
         {/* Terms and Privacy */}
         <ThemedText className="text-xs text-center text-gray-500 dark:text-gray-400 mb-4">
-          By creating an account, you agree to our Terms of Service and Privacy Policy
+          By creating an account, you agree to our 
+          <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync('https://cashbook-assist.shsoftwares.com/application/terms-of-use',)}> 
+                       <Text className='text-cyan-500 dark:text-cyan-400 font-bold'>
+             Terms of Service
+            </Text>
+
+          </TouchableOpacity> and <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync('https://cashbook-assist.shsoftwares.com/application/privacy-policy',)}>
+            <Text className='text-cyan-500 dark:text-cyan-400 font-bold'>
+              Privacy Policy
+            </Text>
+          </TouchableOpacity>
         </ThemedText>
 
         {/* Sign In Link */}

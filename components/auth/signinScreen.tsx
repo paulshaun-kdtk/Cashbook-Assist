@@ -157,7 +157,7 @@ export default function SigninScreen() {
 
   return (
     <View className="flex-1 bg-white dark:bg-[#0B0D2A] pt-12">
-      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 20 }}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 20, paddingBottom: 100 }}>
         <View className="flex-row justify-end items-center mb-10 mr-4">
           <ThemedText className="text-xs text-gray-400 dark:text-gray-500 mt-1">© Cashbook Assist {new Date().getFullYear()} All rights reserved.</ThemedText>
         </View>
