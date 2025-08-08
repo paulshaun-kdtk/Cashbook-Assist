@@ -1,7 +1,7 @@
 import { useToast } from '@/hooks/useToast';
 import { confirmUserNameBelongsToUser } from '@/redux/appwrite/auth/userActions';
 import { RootState } from '@/redux/store';
-import { googleLoginThunk, loginThunk } from '@/redux/thunks/auth/authThunk';
+import { checkSessionThunk, googleLoginThunk, loginThunk } from '@/redux/thunks/auth/authThunk';
 import { Ionicons } from '@expo/vector-icons'; // For eye icon, Google, and Apple icons
 import { Link, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
@@ -20,10 +20,28 @@ export default function SigninScreen() {
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
   const { loading, user, error } = useSelector((state: RootState) => state.auth)
-
+  
   const router = useRouter();
   const dispatch = useDispatch()
   const { showToast } = useToast();
+
+  // Check for active session on component mount
+  useEffect(() => {
+    const checkActiveSession = async () => {
+      try {
+        const result = await (dispatch as any)(checkSessionThunk()).unwrap();
+        if (result) {
+          showToast({ type: 'success', text1: 'Welcome back!', text2: 'Redirecting you to your dashboard...' });
+          router.replace('/(tabs)');
+        }
+      } catch (error) {
+        // No active session, continue with normal signin flow
+        console.log('No active session found');
+      }
+    };
+
+    checkActiveSession();
+  }, [dispatch, router, showToast]);
 
   // Preload browser for faster OAuth
   useEffect(() => {
@@ -154,6 +172,8 @@ export default function SigninScreen() {
         setCheckingUsername(false);
       }
     }
+
+    // useEffect
 
   return (
     <View className="flex-1 bg-white dark:bg-[#0B0D2A] pt-12">
