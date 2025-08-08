@@ -1,5 +1,6 @@
 import { AppState, AppStateStatus } from 'react-native';
 import Purchases, { CustomerInfo } from 'react-native-purchases';
+import { sessionAwareSubscriptionService } from './sessionAwareSubscriptionService';
 import { subscriptionAPIService } from './subscriptionAPIService';
 import { subscriptionService } from './subscriptionService';
 
@@ -187,31 +188,63 @@ export class SubscriptionValidationService {
       let syncedWithAppwrite = false;
       if (userEmail) {
         try {
-          const syncResult = await subscriptionAPIService.upsertSubscription(
+          // Use session-aware service to avoid API key/session conflict
+          console.log('Using session-aware service for subscription sync...');
+          
+          // Try to use session-based update first
+          const sessionResult = await sessionAwareSubscriptionService.updateAppwriteSubscription(
             userEmail,
-            userEmail, // Using email as username fallback
             {
               subscription_status: subscriptionStatus,
               subscription_type: hasActiveSubscription ? 'premium' : 'trial',
-              subscription_id: customerInfo.originalAppUserId,
-              payment_platform: 'revenue_cat',
               subscription_plan_id: hasActiveSubscription ? 
                 Object.keys(customerInfo.entitlements.active)[0] || 'premium' : 
-                'trial'
+                'trial',
+              subscription_id: customerInfo.originalAppUserId,
+              payment_platform: 'revenue_cat'
             }
           );
 
-          syncedWithAppwrite = syncResult.success;
+          syncedWithAppwrite = sessionResult.success;
           
-          if (syncResult.success) {
-            console.log('Successfully synced subscription status with Appwrite');
+          if (sessionResult.success) {
+            console.log('Successfully synced subscription status with Appwrite using session');
             // Clear subscription cache to force refresh
             subscriptionService.clearCache();
           } else {
-            console.error('Failed to sync with Appwrite:', syncResult.message);
+            console.warn('Session-based sync failed, falling back to API key method:', sessionResult.message);
+            
+            // Fallback to API key method only if session method fails
+            const fallbackResult = await subscriptionAPIService.upsertSubscription(
+              userEmail,
+              userEmail, // Using email as username fallback
+              {
+                subscription_status: subscriptionStatus,
+                subscription_type: hasActiveSubscription ? 'premium' : 'trial',
+                subscription_id: customerInfo.originalAppUserId,
+                payment_platform: 'revenue_cat',
+                subscription_plan_id: hasActiveSubscription ? 
+                  Object.keys(customerInfo.entitlements.active)[0] || 'premium' : 
+                  'trial'
+              }
+            );
+            
+            syncedWithAppwrite = fallbackResult.success;
+            
+            if (fallbackResult.success) {
+              console.log('Successfully synced subscription status with Appwrite using API key fallback');
+              subscriptionService.clearCache();
+            } else {
+              console.error('Both session and API key sync methods failed:', fallbackResult.message);
+            }
           }
-        } catch (syncError) {
+        } catch (syncError: any) {
           console.error('Error syncing with Appwrite:', syncError);
+          
+          // Check if it's the API key/session conflict error
+          if (syncError.message?.includes('API key and session used in the same request')) {
+            console.error('API key/session conflict detected - this should be handled by session-aware service');
+          }
         }
       }
 

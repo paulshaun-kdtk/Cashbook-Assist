@@ -90,7 +90,15 @@ export const sessionAwareSubscriptionService = {
       
       // Check if it's the API key conflict error
       if (error.message?.includes('API key and session used in the same request')) {
+        console.error('🚨 API key and session conflict detected in sessionAwareSubscriptionService');
+        console.error('This should not happen as this service is designed to use session-only authentication');
         throw new Error('AUTHENTICATION_CONFLICT: API key and session conflict detected');
+      }
+      
+      // Check if it's a session/authentication error
+      if (error.message?.includes('unauthorized') || error.message?.includes('authentication')) {
+        console.warn('🔐 Authentication error - user may not be properly logged in');
+        throw new Error('AUTHENTICATION_ERROR: User session invalid or expired');
       }
       
       throw error;
@@ -224,6 +232,25 @@ export const sessionAwareSubscriptionService = {
       };
     } catch (error: any) {
       console.error('❌ Failed to update Appwrite subscription:', error);
+      
+      // Handle specific API key/session conflict
+      if (error.message?.includes('API key and session used in the same request')) {
+        return {
+          success: false,
+          message: 'Authentication conflict: Cannot update subscription while user is signed in. Please sign out and try again.',
+          method: 'auth_conflict_error'
+        };
+      }
+      
+      // Handle session/authentication errors
+      if (error.message?.includes('unauthorized') || error.message?.includes('authentication')) {
+        return {
+          success: false,
+          message: 'Authentication error: User session invalid or expired. Please sign in again.',
+          method: 'session_error'
+        };
+      }
+      
       return {
         success: false,
         message: error.message || 'Failed to update subscription',

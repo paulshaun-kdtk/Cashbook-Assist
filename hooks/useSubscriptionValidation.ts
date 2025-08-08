@@ -32,9 +32,19 @@ export const useSubscriptionValidation = () => {
       // Don't show toast here to avoid dependency loop - let the listener handle it
       if (result.error) {
         console.error('Subscription validation failed:', result.error);
+        
+        // Check for specific API key/session conflict error
+        if (result.error.includes('API key and session used in the same request')) {
+          console.warn('⚠️ API key/session conflict detected during validation - this should be handled automatically');
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error during manual validation:', error);
+      
+      // Handle API key/session conflict error specifically
+      if (error.message?.includes('API key and session used in the same request')) {
+        console.warn('⚠️ API key/session conflict error caught in hook - validation service should handle this automatically');
+      }
     } finally {
       setIsValidating(false);
     }
