@@ -31,7 +31,7 @@ export class SubscriptionService {
     return {
       maxCompanies: 1,
       maxCashbooks: 1,
-      maxTransactions: 1000
+      maxTransactions: 50
     };
   }
 

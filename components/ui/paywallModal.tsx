@@ -627,7 +627,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
               🎁 Currently on Free Trial
             </Text>
             <Text className="text-orange-700 dark:text-orange-300 text-sm mt-1">
-              Limited to 1 company, 1 cashbook, and 1,000 transactions
+              Limited to 1 company, 1 cashbook, and 50 transactions
             </Text>
           </View>
 

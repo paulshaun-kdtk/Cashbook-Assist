@@ -34,9 +34,26 @@ export default function SigninScreen() {
           showToast({ type: 'success', text1: 'Welcome back!', text2: 'Redirecting you to your dashboard...' });
           router.replace('/(tabs)');
         }
-      } catch (error) {
-        // No active session, continue with normal signin flow
-        console.log('No active session found');
+      } catch (error: any) {
+        // Handle different types of session check errors
+        if (error?.error === 'network_error') {
+          // Network error - user can still use the app in offline mode if they have stored auth
+          console.log('Network error during session check. App will work in offline mode if user is authenticated.');
+          showToast({ 
+            type: 'info', 
+            text1: 'Offline Mode', 
+            text2: 'Using offline mode. Some features may be limited.' 
+          });
+          
+          // Check if user is actually authenticated from stored data
+          // The auth state will be updated by initAuth if they have valid stored auth
+        } else if (error?.error === 'authentication_error') {
+          // Authentication error - user needs to sign in
+          console.log('Authentication error - user needs to sign in');
+        } else {
+          // Other errors - treat as no active session
+          console.log('No active session found:', error);
+        }
       }
     };
 
@@ -181,7 +198,11 @@ export default function SigninScreen() {
         <View className="flex-row justify-end items-center mb-10 mr-4">
           <ThemedText className="text-xs text-gray-400 dark:text-gray-500 mt-1">© Cashbook Assist {new Date().getFullYear()} All rights reserved.</ThemedText>
         </View>
-        {error && (<Text className="text-red-500 text-center mb-4">{error}</Text>)}
+        {error && (
+          <Text className="text-red-500 text-center mb-4">
+            {typeof error === 'string' ? error : error?.message || 'An error occurred'}
+          </Text>
+        )}
         {loading && <ActivityIndicator size={'small'}  color={'#ABF372'}/>}
 
         {/* Welcome Section */}

@@ -181,7 +181,7 @@ export const SubscriptionStatusCard: React.FC<SubscriptionStatusCardProps> = ({
             Transactions
           </Text>
           <Text className="text-orange-800 dark:text-orange-200 text-sm font-medium">
-            {counts.transactions}/1,000
+            {counts.transactions}/50
           </Text>
         </View>
       </View>
@@ -192,14 +192,14 @@ export const SubscriptionStatusCard: React.FC<SubscriptionStatusCardProps> = ({
           <View 
             className="bg-orange-500 h-full" 
             style={{ 
-              width: `${Math.min((counts.transactions / 1000) * 100, 100)}%` 
+              width: `${Math.min((counts.transactions / 50) * 100, 100)}%` 
             }}
           />
         </View>
         <Text className="text-orange-600 dark:text-orange-400 text-xs mt-1 text-center">
-          {counts.transactions >= 1000 ? 
+          {counts.transactions >= 50 ? 
             'Transaction limit reached' : 
-            `${1000 - counts.transactions} transactions remaining`
+            `${50 - counts.transactions} transactions remaining`
           }
         </Text>
       </View>

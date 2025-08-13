@@ -1,4 +1,5 @@
 import { clearAuth } from "@/redux/slices/auth/authSlice";
+import { handleErrorWithOfflineSupport } from "@/utils/networkErrorDetection";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import Storage from 'expo-sqlite/kv-store';
 import * as WebBrowser from 'expo-web-browser';
@@ -23,14 +24,41 @@ export const initAuth = () => async (dispatch) => {
           payload: currentUser, // safer than trusting stale storage
         });
       } catch (error) {
-        console.log('Invalid or expired session. Clearing stored auth.');
-        await Storage.removeItem('auth');
-        dispatch(clearAuth());
+        // Analyze the error to determine if it's network-related
+        const errorAnalysis = handleErrorWithOfflineSupport(error, 'session_check');
+        
+        if (errorAnalysis.shouldActivateOfflineMode) {
+          // Network error - keep user logged in but activate offline mode
+          console.log('Network error during session check. Activating offline mode and keeping user authenticated.');
+          console.log('Error details:', errorAnalysis.analysis);
+          
+          // Restore from stored auth data instead of clearing
+          dispatch({
+            type: 'auth/restoreSession',
+            payload: authData.user,
+          });
+          
+          // Note: The OfflineIndicator component will show offline status
+          // The app will continue to work in offline mode with local data
+        } else {
+          // Authentication error or other non-network error - clear auth
+          console.log('Authentication error during session check. Clearing stored auth.');
+          console.log('Error type:', errorAnalysis.analysis.errorType);
+          await Storage.removeItem('auth');
+          dispatch(clearAuth());
+        }
       }
     }
   } catch (error) {
     console.log('Error restoring auth:', error);
-    dispatch(clearAuth());
+    
+    // Even for top-level errors, check if it might be network-related
+    const errorAnalysis = handleErrorWithOfflineSupport(error, 'auth_restore');
+    
+    if (!errorAnalysis.shouldActivateOfflineMode) {
+      // Only clear auth if it's not a network error
+      dispatch(clearAuth());
+    }
   }
 };
 
@@ -38,7 +66,7 @@ export const loginThunk = createAsyncThunk(
   "auth/login",
   async ({ email, password, username }, thunkAPI) => {
     try {
-      const session = await account.createEmailPasswordSession(email, password);
+      await account.createEmailPasswordSession(email, password);
       const user = await account.get();
 
       // Save to Storage
@@ -172,10 +200,51 @@ export const checkSessionThunk = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const user = await account.get();
+      
+      // Save to Storage with the same structure as other auth methods
+      const authData = {
+        user,
+        unique_id: user.email,
+        authenticated: true,
+      };
+      await Storage.setItem('auth', JSON.stringify(authData));
+      
       return user;
     } catch (error) {
-        console.error(error)
-      return thunkAPI.rejectWithValue(null);
+      console.error('Session check error:', error);
+      
+      // Analyze the error to determine if it's network-related
+      const errorAnalysis = handleErrorWithOfflineSupport(error, 'session_check');
+      
+      if (errorAnalysis.shouldActivateOfflineMode) {
+        // Network error - try to restore from stored auth data
+        try {
+          const authDataString = await Storage.getItem('auth');
+          if (authDataString) {
+            const authData = JSON.parse(authDataString);
+            if (authData?.authenticated && authData?.user) {
+              console.log('Network error during session check. Using stored auth data and activating offline mode.');
+              return authData.user; // Return stored user data
+            }
+          }
+        } catch (storageError) {
+          console.error('Failed to retrieve stored auth data:', storageError);
+        }
+        
+        // If no stored auth data, still reject but with network error context
+        return thunkAPI.rejectWithValue({
+          error: 'network_error',
+          message: 'Network unavailable. Please check your connection.',
+          shouldRetry: true
+        });
+      } else {
+        // Authentication error or other non-network error
+        return thunkAPI.rejectWithValue({
+          error: 'authentication_error',
+          message: 'Session expired. Please sign in again.',
+          shouldRetry: false
+        });
+      }
     }
   }
 );

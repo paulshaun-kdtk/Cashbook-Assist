@@ -5,6 +5,7 @@ import ExportModal from '@/components/ui/exportModal';
 import { PaywallModal } from '@/components/ui/paywallModal';
 import { SubscriptionStatusCard } from '@/components/ui/subscriptionStatusCard';
 import TransactionFilter from '@/components/ui/transactionFilter';
+import { useOfflineSync } from '@/hooks/useOfflineSync';
 import { useStoredUsername } from '@/hooks/useStoredUsername';
 import { useSubscriptionValidation } from '@/hooks/useSubscriptionValidation';
 import { selectCashbookBalances } from '@/redux/slices/cashbooks/selectCashbookTotals';
@@ -30,15 +31,16 @@ export default function HomeScreen() {
   const {username} = useStoredUsername()
   const dispatch = useDispatch()
   
+  // Offline sync hook to check connectivity status
+  const { isOnline } = useOfflineSync();
+  
   // Subscription validation hook - automatically validates subscriptions
   const { 
     validateNow, 
     lastValidationTime, 
     hasActiveSubscription,
     syncedWithAppwrite 
-  } = useSubscriptionValidation();
-
-    const balances = useSelector(selectCashbookBalances)
+  } = useSubscriptionValidation();    const balances = useSelector(selectCashbookBalances)
     const { income } = useSelector((state: RootState) => state.income);
     const { expenses } = useSelector((state: RootState) => state.expenses);
     const { companies } = useSelector(
@@ -226,10 +228,12 @@ export default function HomeScreen() {
       </View>
         </View>
 
-        {/* Subscription Status Card */}
-        <SubscriptionStatusCard 
-          onUpgradePress={() => setShowPaywallModal(true)}
-        />
+        {/* Subscription Status Card - Only show when online */}
+        {isOnline && (
+          <SubscriptionStatusCard 
+            onUpgradePress={() => setShowPaywallModal(true)}
+          />
+        )}
 
         {/* Balance */}
         <View className="bg-gray-100 dark:bg-[#1A1E4A] mx-4 mt-6 rounded-xl p-4">
