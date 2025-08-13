@@ -239,24 +239,32 @@ export default function HomeScreen() {
         <View className="bg-gray-100 dark:bg-[#1A1E4A] mx-4 mt-6 rounded-xl p-4">
           <View className="flex-row justify-between items-center">
             <ThemedText className="text-black dark:text-white"> Balance</ThemedText>
-            <ThemedText className="text-xs text-gray-500 dark:text-white">All Companies</ThemedText>
+            <ThemedText className="text-xs text-gray-500 dark:text-white">
+              {Object.keys(filters).some(key => filters[key as keyof typeof filters]) ? 'Filtered' : 'All Companies'}
+            </ThemedText>
           </View>
-          <ThemedText className="text-4xl font-bold text-green-500 dark:text-green-400 mt-2">{formatCurrency(totalBalance.toString())}</ThemedText>
+          <ThemedText className="text-4xl font-bold text-green-500 dark:text-green-400 mt-2">
+            {formatCurrency((Object.keys(filters).some(key => filters[key as keyof typeof filters]) ? filteredNetAmount : totalBalance).toString())}
+          </ThemedText>
 
           <View className="flex-row justify-between mt-4 space-x-3">
             <View className="flex-1 rounded-xl p-3 bg-gradient-to-b from-blue-300 to-blue-600 dark:from-[#4C4AFF] dark:to-[#2B2A7C]">
               <ThemedText className="text-sm text-black dark:text-white">Income</ThemedText>
               <Text className="text-lg font-bold text-green-600 dark:text-green-400">
-                {formatCurrency(totalIncome.toString())}
+                {formatCurrency((Object.keys(filters).some(key => filters[key as keyof typeof filters]) ? filteredTotalIncome : totalIncome).toString())}
               </Text>
-              <Text className="text-xs text-gray-600 dark:text-gray-300">all time</Text>
+              <Text className="text-xs text-gray-600 dark:text-gray-300">
+                {Object.keys(filters).some(key => filters[key as keyof typeof filters]) ? 'filtered' : 'all time'}
+              </Text>
             </View>
             <View className="flex-1 rounded-xl p-3 bg-gradient-to-b from-red-300 to-red-600 dark:from-[#FF4C4C] dark:to-[#7C2B2B]">
               <ThemedText className="text-sm text-black dark:text-white">Expenses</ThemedText>
               <Text className="text-lg font-bold text-red-600 dark:text-red-400">
-                {formatCurrency(totalExpenses.toString())}
+                {formatCurrency((Object.keys(filters).some(key => filters[key as keyof typeof filters]) ? filteredTotalExpenses : totalExpenses).toString())}
               </Text>
-              <Text className="text-xs text-gray-600 dark:text-gray-300">all time</Text>
+              <Text className="text-xs text-gray-600 dark:text-gray-300">
+                {Object.keys(filters).some(key => filters[key as keyof typeof filters]) ? 'filtered' : 'all time'}
+              </Text>
             </View>
           </View>
         </View>

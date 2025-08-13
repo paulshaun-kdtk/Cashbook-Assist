@@ -2,7 +2,11 @@ import { useStoredUsername } from '@/hooks/useStoredUsername';
 import { useToast } from '@/hooks/useToast';
 import { RootState } from '@/redux/store';
 import { fetchCategoriesThunk } from '@/redux/thunks/categories/fetch';
+import { fetchExpensesThunk } from '@/redux/thunks/expenses/fetch';
+import { createExpenseThunk, deleteExpenseThunk } from '@/redux/thunks/expenses/post';
 import { updateExpenseItemThunk } from '@/redux/thunks/expenses/update';
+import { fetchIncomeThunk } from '@/redux/thunks/income/fetch';
+import { createIncomeThunk, deleteIncomeThunk } from '@/redux/thunks/income/post';
 import { updateIncomeItemThunk } from '@/redux/thunks/income/update';
 import { Category } from '@/types/category';
 import { Transaction } from '@/types/transaction';
@@ -103,16 +107,56 @@ export default function UpdateTransactionForm({onFormSubmit=null, transactionDat
     };
 
     try {
-      const success = data.type === 'income' 
-        ? await dispatch(updateIncomeItemThunk({documentId: transactionData?.$id, data: transactionPayload}) as any).unwrap() 
-        : await dispatch(updateExpenseItemThunk({documentId: transactionData?.$id, data: transactionPayload}) as any).unwrap();
-      if (success) {
-        showToast({ 
-          type: 'success', 
-          text1: transactionData ? 'Transaction updated successfully!' : 'Transaction added successfully!' 
-        });
-        onFormSubmit && onFormSubmit()
+      const originalType = transactionData?.type;
+      const newType = data.type;
+      
+      // Check if transaction type has changed
+      if (originalType && originalType !== newType) {
+        // Type changed - need to delete from original collection and create in new collection
+        
+        // First delete from original collection
+        if (originalType === 'income') {
+          await dispatch(deleteIncomeThunk({ documentId: transactionData?.$id }) as any).unwrap();
+        } else {
+          await dispatch(deleteExpenseThunk({ documentId: transactionData?.$id }) as any).unwrap();
+        }
+        
+        // Then create in new collection
+        if (newType === 'income') {
+          await dispatch(createIncomeThunk({ data: transactionPayload }) as any).unwrap();
+        } else {
+          await dispatch(createExpenseThunk({ data: transactionPayload }) as any).unwrap();
+        }
+        
+        // Refresh both collections to reflect the changes
+        if (username) {
+          dispatch(fetchIncomeThunk(username) as any);
+          dispatch(fetchExpensesThunk(username) as any);
+        }
+        
+      } else {
+        // Type hasn't changed - normal update
+        if (data.type === 'income') {
+          await dispatch(updateIncomeItemThunk({documentId: transactionData?.$id, data: transactionPayload}) as any).unwrap();
+          // Refresh income collection
+          if (username) {
+            dispatch(fetchIncomeThunk(username) as any);
+          }
+        } else {
+          await dispatch(updateExpenseItemThunk({documentId: transactionData?.$id, data: transactionPayload}) as any).unwrap();
+          // Refresh expenses collection
+          if (username) {
+            dispatch(fetchExpensesThunk(username) as any);
+          }
+        }
       }
+      
+      showToast({ 
+        type: 'success', 
+        text1: transactionData ? 'Transaction updated successfully!' : 'Transaction added successfully!' 
+      });
+      onFormSubmit && onFormSubmit()
+      
     } catch (error: any) {
       console.log(error)
       showToast({ 
