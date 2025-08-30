@@ -7,7 +7,6 @@ import { fetchCategoriesThunk } from '@/redux/thunks/categories/fetch';
 import { createExpenseThunk } from '@/redux/thunks/expenses/post';
 import { createIncomeThunk } from '@/redux/thunks/income/post';
 import { Category } from '@/types/category';
-import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -122,7 +121,7 @@ export default function AddTransactionForm({onFormSubmit}: {onFormSubmit?: (() =
         <ThemedText type='subtitle' className="text-xl font-bold">Add New Transaction</ThemedText>
         
         {/* AI Mode Toggle */}
-        <TouchableOpacity
+        {/* <TouchableOpacity
           onPress={() => setUseAIMode(!useAIMode)}
           className={`flex-row items-center px-3 py-2 rounded-lg ${
             useAIMode ? 'bg-cyan-500' : 'bg-gray-200 dark:bg-gray-700'
@@ -138,7 +137,7 @@ export default function AddTransactionForm({onFormSubmit}: {onFormSubmit?: (() =
           }`}>
             AI
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       {/* Conditional Rendering: AI Smart Form vs Regular Form */}

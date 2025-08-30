@@ -8,6 +8,7 @@ import React, { useState } from 'react';
 import { ActivityIndicator, ScrollView, Share, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useSelector } from 'react-redux';
 import { ThemedText } from '../ThemedText';
+import { SwipeActionTutorial } from '../ui/SwipeActionTutorial';
 
 export default function ProfileScreen() {
     const router = useRouter()
@@ -15,6 +16,7 @@ export default function ProfileScreen() {
   const { user } = useSelector((state: RootState) => state.auth);
   const { showToast } = useToast();
   const [isSyncing, setIsSyncing] = useState(false);
+  const [showSwipeTutorial, setShowSwipeTutorial] = useState(false);
 
   const handleManualSync = async () => {
     if (!(user as any)?.email) {
@@ -106,6 +108,17 @@ export default function ProfileScreen() {
             )}
           </TouchableOpacity>
 
+          {/* Show Swipe Tutorial */}
+          <TouchableOpacity
+            onPress={() => setShowSwipeTutorial(true)}
+            className="flex-row items-center justify-between py-3 px-4 bg-gray-100 dark:bg-[#1A1E4A] border-b border-gray-200 dark:border-[#2C2F5D]">
+            <View className="flex-row items-center">
+              <Ionicons name="help-outline" size={24} color={theme === 'dark' ? 'white' : '#6B7280'} className="mr-3" />
+              <ThemedText className="text-base">Show Swipe Tutorial</ThemedText>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={theme === 'dark' ? 'white' : '#6B7280'} />
+          </TouchableOpacity>
+
           {/* About */}
           <TouchableOpacity className="flex-row items-center justify-between py-3 px-4 bg-gray-100 dark:bg-[#1A1E4A] border-b border-gray-200 dark:border-[#2C2F5D]"
           onPress={() => WebBrowser.openBrowserAsync('https://cashbook-assist.shsoftwares.com/#features')}
@@ -167,6 +180,13 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Swipe Action Tutorial */}
+      <SwipeActionTutorial
+        visible={showSwipeTutorial}
+        onClose={() => setShowSwipeTutorial(false)}
+        targetComponent="transactions"
+      />
     </View>
   );
 }

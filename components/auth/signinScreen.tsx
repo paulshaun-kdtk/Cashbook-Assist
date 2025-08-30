@@ -124,55 +124,6 @@ export default function SigninScreen() {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    if (googleLoading) return; // Prevent double clicks
-    
-    setGoogleLoading(true);
-    try {
-      showToast({ type: 'info', text1: 'Opening Google sign in...' });
-      
-      console.log('Starting Google OAuth with web redirect...');
-      
-      const result = await (dispatch as any)(googleLoginThunk()).unwrap();
-      
-      console.log('Google login result:', result);
-      
-      if (result?.initiated) {
-        if (result.authenticated) {
-          // User completed authentication in browser
-          showToast({ type: 'success', text1: 'Google login successful!' });
-          router.replace('/(tabs)');
-        } else {
-          showToast({ type: 'info', text1: 'Complete sign in on shsoftwares.com' });
-        }
-      }
-    } catch (error: any) {
-      console.error('Google login error:', error);
-      showToast({ type: 'error', text1: error?.message || 'Failed to open Google sign in' });
-    } finally {
-      // Reset loading state quickly since OAuth opens external browser
-      setTimeout(() => setGoogleLoading(false), 1000);
-    }
-  };
-
-  // Test function to check if WebBrowser works
-  const testBrowser = async () => {
-    try {
-      console.log('Testing browser...');
-      const result = await WebBrowser.openBrowserAsync('https://google.com');
-      console.log('Browser test result:', result);
-      showToast({ type: 'info', text1: 'Browser test completed' });
-    } catch (error) {
-      console.error('Browser test failed:', error);
-      showToast({ type: 'error', text1: 'Browser test failed' });
-    }
-  };
-
-  const handleAppleLogin = () => {
-    console.log('Continue with Apple');
-    // Implement Apple login logic
-  };
-
     async function handleUsernameCheck() {
       if (!username) {
         setUsernameAvailable(null); // reset to neutral state

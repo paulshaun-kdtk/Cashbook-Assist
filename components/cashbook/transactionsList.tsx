@@ -17,6 +17,7 @@ import {
   Alert,
   FlatList,
   Text,
+  TextInput,
   TouchableOpacity,
   useColorScheme,
   View,
@@ -27,8 +28,10 @@ import { useDispatch, useSelector } from "react-redux";
 import AddTransactionForm from "../forms/addTransaction";
 import UpdateTransactionForm from "../forms/updateTransaction";
 import { ThemedText } from "../ThemedText";
+import BackButton from "../ui/BackButton";
 import ExportModal from "../ui/exportModal";
 import Loader from "../ui/loading";
+import TransactionFilter from "../ui/transactionFilter";
 
 export default function TransactionsListScreen() {
   const theme = useColorScheme(); // 'light' or 'dark'
@@ -49,6 +52,16 @@ export default function TransactionsListScreen() {
   const [selectedTransaction, setSelectedTransaction] =
     useState<Transaction | null>(null);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState({
+    startDate: '',
+    endDate: '',
+    category: '',
+    type: '',
+    company: '',
+    cashbook: '',
+  });
   
   // Pagination state
   const [displayedTransactions, setDisplayedTransactions] = useState<any[]>([]);
@@ -133,14 +146,57 @@ export default function TransactionsListScreen() {
     });
   }, [rawTransactions]);
 
+  // Apply search and filters
+  const filteredTransactions = useMemo(() => {
+    let filtered = transactions;
+
+    // Apply search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(transaction => 
+        transaction.description.toLowerCase().includes(query) ||
+        transaction.category.toLowerCase().includes(query) ||
+        transaction.memo.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply filters
+    if (filters.type && filters.type !== '') {
+      filtered = filtered.filter(transaction => transaction.type === filters.type);
+    }
+
+    if (filters.category && filters.category !== '') {
+      filtered = filtered.filter(transaction => 
+        transaction.category.toLowerCase().includes(filters.category.toLowerCase())
+      );
+    }
+
+    if (filters.startDate) {
+      filtered = filtered.filter(transaction => 
+        new Date(transaction.date) >= new Date(filters.startDate)
+      );
+    }
+
+    if (filters.endDate) {
+      filtered = filtered.filter(transaction => 
+        new Date(transaction.date) <= new Date(filters.endDate)
+      );
+    }
+
+    return filtered;
+  }, [transactions, searchQuery, filters]);
+
   // Load initial transactions
   React.useEffect(() => {
-    if (transactions.length > 0) {
-      const initialTransactions = transactions.slice(0, ITEMS_PER_PAGE);
+    if (filteredTransactions.length > 0) {
+      const initialTransactions = filteredTransactions.slice(0, ITEMS_PER_PAGE);
       setDisplayedTransactions(initialTransactions);
       setCurrentPage(0);
+    } else {
+      setDisplayedTransactions([]);
+      setCurrentPage(0);
     }
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   // Load more transactions function
   const loadMoreTransactions = useCallback(() => {
@@ -150,22 +206,22 @@ export default function TransactionsListScreen() {
     const startIndex = nextPage * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
     
-    if (startIndex >= transactions.length) return;
+    if (startIndex >= filteredTransactions.length) return;
     
     setIsLoadingMore(true);
     
     // Simulate loading delay for better UX
     setTimeout(() => {
-      const newTransactions = transactions.slice(startIndex, endIndex);
+      const newTransactions = filteredTransactions.slice(startIndex, endIndex);
       setDisplayedTransactions(prev => [...prev, ...newTransactions]);
       setCurrentPage(nextPage);
       setIsLoadingMore(false);
     }, 500);
-  }, [currentPage, transactions, isLoadingMore]);
+  }, [currentPage, filteredTransactions, isLoadingMore]);
 
-  const hasMoreTransactions = (currentPage + 1) * ITEMS_PER_PAGE < transactions.length;
+  const hasMoreTransactions = (currentPage + 1) * ITEMS_PER_PAGE < filteredTransactions.length;
 
-  const currentBalance = transactions.at(-1)?.balance ?? 0;
+  const currentBalance = filteredTransactions.at(-1)?.balance ?? 0;
 
   // Calculate totals for export
   const totalIncome = income.reduce((sum, item: Transaction) => sum + item.amount, 0);
@@ -347,7 +403,7 @@ export default function TransactionsListScreen() {
               className="px-6 py-2 bg-gray-200 dark:bg-gray-700 rounded-full"
             >
               <Text className="text-gray-700 dark:text-gray-300 font-semibold">
-                Load More ({transactions.length - displayedTransactions.length} remaining)
+                Load More ({filteredTransactions.length - displayedTransactions.length} remaining)
               </Text>
             </TouchableOpacity>
           )}
@@ -364,7 +420,7 @@ export default function TransactionsListScreen() {
         </Text>
       </TouchableOpacity>
     </View>
-  ), [hasMoreTransactions, isLoadingMore, loadMoreTransactions, transactions.length, displayedTransactions.length, handleAddTransaction]);
+  ), [hasMoreTransactions, isLoadingMore, loadMoreTransactions, filteredTransactions.length, displayedTransactions.length, handleAddTransaction]);
 
   const ListHeaderComponent = useCallback(() => (
     <View>
@@ -403,13 +459,26 @@ export default function TransactionsListScreen() {
   ), []);
 
   return (
+    <>
     <View className="bg-white dark:bg-[#0B0D2A] pt-12" style={{ position: 'relative' }}>
       {/* Header Section */}
       <View className="px-4 flex-row items-center justify-between relative mb-6">
-      <View className="flex-row justify-between items-start" />
+        <BackButton />
+        <View className="flex-row justify-between items-start" />
         <ThemedText type="title" style={{ maxWidth: '70%' }}>
           {whichCashbook?.name || "All Transactions"}
         </ThemedText>
+
+        <TouchableOpacity
+          onPress={() => handleAddTransaction()}
+          className="p-2 rounded-full bg-blue-700"
+        >
+          <Ionicons 
+            name="add-outline" 
+            size={20} 
+            color={theme === 'dark' ? 'white' : 'black'} 
+          />
+        </TouchableOpacity>
 
         <TouchableOpacity
           onPress={() => setShowExportModal(true)}
@@ -421,6 +490,125 @@ export default function TransactionsListScreen() {
             color={theme === 'dark' ? 'white' : 'black'} 
           />
         </TouchableOpacity>
+      </View>
+
+      {/* Search and Filter Section */}
+      <View className="px-4 mb-4">
+        {/* Search Bar */}
+        <View className="relative mb-3">
+          <TextInput
+            className="w-full p-3 pl-10 pr-10 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-black dark:text-white"
+            placeholder="Search transactions..."
+            placeholderTextColor={theme === 'dark' ? '#9CA3AF' : '#6B7280'}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          <Ionicons
+            name="search"
+            size={20}
+            color={theme === 'dark' ? '#9CA3AF' : '#6B7280'}
+            style={{ position: 'absolute', left: 12, top: 14 }}
+          />
+          {searchQuery ? (
+            <TouchableOpacity
+              onPress={() => setSearchQuery('')}
+              style={{ position: 'absolute', right: 12, top: 12 }}
+            >
+              <Ionicons
+                name="close-circle"
+                size={24}
+                color={theme === 'dark' ? '#9CA3AF' : '#6B7280'}
+              />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+
+        {/* Filter Controls */}
+        <View className="flex-row items-center justify-between">
+          <TouchableOpacity
+            onPress={() => setShowFilterModal(true)}
+            className="flex-row items-center px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700"
+          >
+            <Ionicons 
+              name="filter" 
+              size={16} 
+              color={theme === 'dark' ? 'white' : 'black'} 
+            />
+            <Text className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Filters
+            </Text>
+            {(filters.type || filters.category || filters.startDate || filters.endDate) && (
+              <View className="ml-2 w-2 h-2 bg-cyan-500 rounded-full" />
+            )}
+          </TouchableOpacity>
+
+          <View className="flex-row items-center">
+            <Text className="text-sm text-gray-500 dark:text-gray-400 mr-2">
+              {displayedTransactions.length} of {filteredTransactions.length} transactions
+            </Text>
+            {(searchQuery || filters.type || filters.category || filters.startDate || filters.endDate) && (
+              <TouchableOpacity
+                onPress={() => {
+                  setSearchQuery('');
+                  setFilters({
+                    startDate: '',
+                    endDate: '',
+                    category: '',
+                    type: '',
+                    company: '',
+                    cashbook: '',
+                  });
+                }}
+                className="px-2 py-1 rounded bg-cyan-100 dark:bg-cyan-800"
+              >
+                <Text className="text-xs text-cyan-700 dark:text-cyan-300">Clear All</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* Active Filters Display */}
+        {(searchQuery || filters.type || filters.category || filters.startDate || filters.endDate) && (
+          <View className="mt-3">
+            <View className="flex-row flex-wrap">
+              {searchQuery && (
+                <View className="bg-blue-100 dark:bg-blue-800 px-3 py-1 rounded-full mr-2 mb-2">
+                  <Text className="text-xs text-blue-700 dark:text-blue-300">
+                    Search: &ldquo;{searchQuery}&rdquo;
+                  </Text>
+                </View>
+              )}
+              {filters.type && (
+                <View className="bg-green-100 dark:bg-green-800 px-3 py-1 rounded-full mr-2 mb-2">
+                  <Text className="text-xs text-green-700 dark:text-green-300">
+                    Type: {filters.type}
+                  </Text>
+                </View>
+              )}
+              {filters.category && (
+                <View className="bg-purple-100 dark:bg-purple-800 px-3 py-1 rounded-full mr-2 mb-2">
+                  <Text className="text-xs text-purple-700 dark:text-purple-300">
+                    Category: {filters.category}
+                  </Text>
+                </View>
+              )}
+              {filters.startDate && (
+                <View className="bg-orange-100 dark:bg-orange-800 px-3 py-1 rounded-full mr-2 mb-2">
+                  <Text className="text-xs text-orange-700 dark:text-orange-300">
+                    From: {new Date(filters.startDate).toLocaleDateString()}
+                  </Text>
+                </View>
+              )}
+              {filters.endDate && (
+                <View className="bg-red-100 dark:bg-red-800 px-3 py-1 rounded-full mr-2 mb-2">
+                  <Text className="text-xs text-red-700 dark:text-red-300">
+                    To: {new Date(filters.endDate).toLocaleDateString()}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        )}
       </View>
 
       {IncomeError && (
@@ -450,7 +638,32 @@ export default function TransactionsListScreen() {
         />
       </View>
 
-      <Modalize
+      {/* Export Modal */}
+      <ExportModal
+        visible={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        transactions={transactions as any}
+        filteredTransactions={displayedTransactions as any}
+        filters={filters}
+        totalIncome={totalIncome}
+        totalExpenses={Math.abs(totalExpenses)}
+        netAmount={netAmount}
+        companyName=""
+        cashbookName={whichCashbook?.name || ""}
+      />
+
+      {/* Transaction Filter Modal */}
+      <TransactionFilter
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApplyFilter={(newFilters) => {
+          setFilters(newFilters);
+          setShowFilterModal(false);
+        }}
+        currentFilters={filters}
+      />
+    </View>
+          <Modalize
         rootStyle={{ 
           backgroundColor: "rgba(0, 0, 0, 0.5)", 
           // zIndex: 9999,
@@ -482,27 +695,7 @@ export default function TransactionsListScreen() {
       >
         <AddTransactionForm onFormSubmit={handleCloseModal} />
       </Modalize>
+    </>
 
-      {/* Export Modal */}
-      <ExportModal
-        visible={showExportModal}
-        onClose={() => setShowExportModal(false)}
-        transactions={transactions}
-        filteredTransactions={displayedTransactions}
-        filters={{
-          startDate: "",
-          endDate: "",
-          category: "",
-          type: "",
-          company: "",
-          cashbook: whichCashbook?.name || "",
-        }}
-        totalIncome={totalIncome}
-        totalExpenses={Math.abs(totalExpenses)}
-        netAmount={netAmount}
-        companyName=""
-        cashbookName={whichCashbook?.name || ""}
-      />
-    </View>
   );
 }

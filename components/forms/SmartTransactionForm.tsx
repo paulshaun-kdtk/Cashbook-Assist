@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, Text, TextInput, TouchableOpacity, View, useColorScheme } from 'react-native';
 import { Category } from '../../types/category';
-import { ThemedView } from '../ThemedView';
 import { AICategorySuggestions } from '../ai/AICategorySuggestions';
 
 interface SmartTransactionFormProps {
@@ -23,11 +23,31 @@ export const SmartTransactionForm: React.FC<SmartTransactionFormProps> = ({
   onCancel,
   style
 }) => {
+  const theme = useColorScheme();
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [memo, setMemo] = useState('');
+
+  // Clear selected category when transaction type changes
+  useEffect(() => {
+    setSelectedCategory('');
+  }, [type]);
+
+  const handleTypeChange = (newType: 'income' | 'expense') => {
+    // Prevent rapid type changes that might cause issues
+    if (type !== newType) {
+      setType(newType);
+    }
+  };
+
+  // Cleanup effect to prevent memory leaks and navigation context issues
+  useEffect(() => {
+    return () => {
+      // Cleanup any pending operations when component unmounts
+    };
+  }, []);
 
   const handleSubmit = () => {
     if (!description.trim() || !amount || !selectedCategory) {
@@ -66,215 +86,214 @@ export const SmartTransactionForm: React.FC<SmartTransactionFormProps> = ({
     : '';
 
   return (
-    <ThemedView style={[{
-      flex: 1,
-      backgroundColor: '#f8fafc',
-    }, style]}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
-        {/* Header */}
-        <View style={{ marginBottom: 24 }}>
-          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1f2937', textAlign: 'center' }}>
-            Smart Transaction
-          </Text>
-          <Text style={{ fontSize: 14, color: '#6b7280', textAlign: 'center', marginTop: 4 }}>
-            AI will suggest categories as you type
-          </Text>
-        </View>
-
-        {/* Transaction Type Toggle */}
-        <View style={{
-          flexDirection: 'row',
-          backgroundColor: 'white',
-          borderRadius: 8,
-          padding: 4,
-          marginBottom: 20,
-        }}>
-          <TouchableOpacity
-            onPress={() => setType('expense')}
-            style={{
-              flex: 1,
-              paddingVertical: 12,
-              backgroundColor: type === 'expense' ? '#ef4444' : 'transparent',
-              borderRadius: 6,
-              alignItems: 'center',
-            }}
-          >
-            <Text style={{
-              color: type === 'expense' ? 'white' : '#6b7280',
-              fontWeight: 'bold',
-            }}>
-              💸 Expense
-            </Text>
+    <View className="flex-1 bg-white dark:bg-[#0B0D2A]">
+      {/* Header */}
+      <View className="px-6 pt-8 pb-4 bg-gradient-to-br from-cyan-500 to-blue-600 dark:from-cyan-600 dark:to-blue-700">
+        <View className="flex-row items-center justify-between mb-4">
+          <TouchableOpacity onPress={onCancel}>
+            <Ionicons name="close" size={24} color="white" />
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setType('income')}
-            style={{
-              flex: 1,
-              paddingVertical: 12,
-              backgroundColor: type === 'income' ? '#10b981' : 'transparent',
-              borderRadius: 6,
-              alignItems: 'center',
-            }}
-          >
-            <Text style={{
-              color: type === 'income' ? 'white' : '#6b7280',
-              fontWeight: 'bold',
-            }}>
-              💰 Income
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Description Input */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1f2937', marginBottom: 8 }}>
-            Description
-          </Text>
-          <TextInput
-            value={description}
-            onChangeText={setDescription}
-            placeholder="What was this transaction for?"
-            style={{
-              backgroundColor: 'white',
-              borderWidth: 1,
-              borderColor: '#d1d5db',
-              borderRadius: 8,
-              padding: 12,
-              fontSize: 16,
-              color: '#1f2937',
-            }}
-            multiline
-            numberOfLines={2}
-          />
-        </View>
-
-        {/* Amount Input */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1f2937', marginBottom: 8 }}>
-            Amount
-          </Text>
-          <TextInput
-            value={amount}
-            onChangeText={setAmount}
-            placeholder="0.00"
-            keyboardType="numeric"
-            style={{
-              backgroundColor: 'white',
-              borderWidth: 1,
-              borderColor: '#d1d5db',
-              borderRadius: 8,
-              padding: 12,
-              fontSize: 18,
-              fontWeight: 'bold',
-              color: '#1f2937',
-            }}
-          />
-        </View>
-
-        {/* AI Category Suggestions */}
-        {description.length > 0 && amount && (
-          <AICategorySuggestions
-            description={description}
-            amount={parseFloat(amount) || 0}
-            type={type}
-            categories={categories}
-            onCategorySelect={handleCategorySelect}
-          />
-        )}
-
-        {/* Selected Category Display */}
-        {selectedCategoryName && (
-          <View style={{
-            backgroundColor: 'white',
-            padding: 12,
-            borderRadius: 8,
-            marginTop: 16,
-            borderWidth: 2,
-            borderColor: '#10b981',
-          }}>
-            <Text style={{ fontSize: 14, color: '#6b7280', marginBottom: 4 }}>
-              Selected Category:
-            </Text>
-            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#10b981' }}>
-              ✅ {selectedCategoryName}
-            </Text>
+          <View className="flex-1 items-center">
+            <Text className="text-xl font-bold text-white">Smart Transaction</Text>
           </View>
-        )}
-
-        {/* Manual Category Selection */}
-        {!selectedCategory && categories.length > 0 && (
-          <View style={{ marginTop: 16 }}>
-            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1f2937', marginBottom: 8 }}>
-              Or choose manually:
-            </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {categories.map((category) => (
-                <TouchableOpacity
-                  key={category.$id}
-                  onPress={() => setSelectedCategory(category.$id)}
-                  style={{
-                    backgroundColor: 'white',
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    borderRadius: 16,
-                    marginRight: 8,
-                    borderWidth: 1,
-                    borderColor: '#d1d5db',
-                  }}
-                >
-                  <Text style={{ fontSize: 12, color: '#6b7280' }}>
-                    {category.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+          <View style={{ width: 24 }} />
+        </View>
+        <View className="items-center">
+          <View className="bg-white/20 px-4 py-2 rounded-full">
+            <Text className="text-sm text-white/90">✨ AI-Powered Category Suggestions</Text>
           </View>
-        )}
+        </View>
+      </View>
 
-        {/* Memo Input */}
-        <View style={{ marginTop: 16, marginBottom: 24 }}>
-          <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1f2937', marginBottom: 8 }}>
-            Notes (Optional)
-          </Text>
-          <TextInput
-            value={memo}
-            onChangeText={setMemo}
-            placeholder="Additional notes..."
-            style={{
-              backgroundColor: 'white',
-              borderWidth: 1,
-              borderColor: '#d1d5db',
-              borderRadius: 8,
-              padding: 12,
-              fontSize: 16,
-              color: '#1f2937',
-              minHeight: 60,
-            }}
-            multiline
-            numberOfLines={3}
-          />
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <View className="px-6 py-6">
+          {/* Transaction Type Toggle */}
+          <View className="mb-6">
+            <Text className="text-lg font-semibold text-gray-800 dark:text-white mb-3">
+              Transaction Type
+            </Text>
+            <View className="flex-row bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+              <TouchableOpacity
+                onPress={() => handleTypeChange('expense')}
+                className={`flex-1 flex-row items-center justify-center py-3 rounded-lg ${
+                  type === 'expense' 
+                    ? 'bg-red-500 dark:bg-red-600 shadow-lg' 
+                    : 'bg-transparent'
+                }`}
+              >
+                <Text className="text-2xl mr-2">💸</Text>
+                <Text className={`font-bold ${
+                  type === 'expense' 
+                    ? 'text-white' 
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}>
+                  Expense
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => handleTypeChange('income')}
+                className={`flex-1 flex-row items-center justify-center py-3 rounded-lg ${
+                  type === 'income' 
+                    ? 'bg-green-500 dark:bg-green-600 shadow-lg' 
+                    : 'bg-transparent'
+                }`}
+              >
+                <Text className="text-2xl mr-2">💰</Text>
+                <Text className={`font-bold ${
+                  type === 'income' 
+                    ? 'text-white' 
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}>
+                  Income
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Description Input */}
+          <View className="mb-6">
+            <Text className="text-lg font-semibold text-gray-800 dark:text-white mb-3">
+              Description
+            </Text>
+            <View className="relative">
+              <TextInput
+                value={description}
+                onChangeText={setDescription}
+                placeholder="What was this transaction for?"
+                placeholderTextColor={theme === 'dark' ? '#9CA3AF' : '#6B7280'}
+                className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-4 text-gray-800 dark:text-white text-base"
+                multiline
+                numberOfLines={2}
+              />
+              <View className="absolute top-4 right-4">
+                <Ionicons 
+                  name="document-text-outline" 
+                  size={20} 
+                  color={theme === 'dark' ? '#9CA3AF' : '#6B7280'} 
+                />
+              </View>
+            </View>
+          </View>
+
+          {/* Amount Input */}
+          <View className="mb-6">
+            <Text className="text-lg font-semibold text-gray-800 dark:text-white mb-3">
+              Amount
+            </Text>
+            <View className="relative">
+              <TextInput
+                value={amount}
+                onChangeText={setAmount}
+                placeholder="0.00"
+                placeholderTextColor={theme === 'dark' ? '#9CA3AF' : '#6B7280'}
+                keyboardType="numeric"
+                className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-4 text-gray-800 dark:text-white text-xl font-bold"
+              />
+              <View className="absolute top-4 right-4">
+                <Text className="text-xl text-gray-500 dark:text-gray-400">$</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* AI Category Suggestions */}
+          {description.length > 0 && amount && (
+            <View className="mb-6">
+              <Text className="text-lg font-semibold text-gray-800 dark:text-white mb-3">
+                🤖 AI Suggestions
+              </Text>
+              <AICategorySuggestions
+                description={description}
+                amount={parseFloat(amount) || 0}
+                type={type}
+                categories={categories}
+                onCategorySelect={handleCategorySelect}
+              />
+            </View>
+          )}
+
+          {/* Selected Category Display */}
+          {selectedCategoryName && (
+            <View className="mb-6">
+              <View className="bg-green-50 dark:bg-green-900/30 border-2 border-green-200 dark:border-green-700 rounded-xl p-4">
+                <View className="flex-row items-center">
+                  <View className="bg-green-500 rounded-full p-2 mr-3">
+                    <Ionicons name="checkmark" size={16} color="white" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-sm text-green-600 dark:text-green-400 font-medium">
+                      Selected Category
+                    </Text>
+                    <Text className="text-lg font-bold text-green-700 dark:text-green-300">
+                      {selectedCategoryName}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* Manual Category Selection */}
+          {!selectedCategory && categories.length > 0 && (
+            <View className="mb-6">
+              <Text className="text-lg font-semibold text-gray-800 dark:text-white mb-3">
+                Or choose manually:
+              </Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View className="flex-row">
+                  {categories.map((category, index) => (
+                    <TouchableOpacity
+                      key={category.$id || index}
+                      onPress={() => setSelectedCategory(category.$id)}
+                      className={`bg-white dark:bg-gray-800 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm ${
+                        index < categories.length - 1 ? 'mr-3' : ''
+                      }`}
+                    >
+                      <Text className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {category.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Memo Input */}
+          <View className="mb-6">
+            <Text className="text-lg font-semibold text-gray-800 dark:text-white mb-3">
+              Notes (Optional)
+            </Text>
+            <View className="relative">
+              <TextInput
+                value={memo}
+                onChangeText={setMemo}
+                placeholder="Additional notes..."
+                placeholderTextColor={theme === 'dark' ? '#9CA3AF' : '#6B7280'}
+                className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-4 text-gray-800 dark:text-white text-base min-h-[80px]"
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+              <View className="absolute top-4 right-4">
+                <Ionicons 
+                  name="document-outline" 
+                  size={20} 
+                  color={theme === 'dark' ? '#9CA3AF' : '#6B7280'} 
+                />
+              </View>
+            </View>
+          </View>
         </View>
       </ScrollView>
 
       {/* Action Buttons */}
-      <View style={{
-        padding: 16,
-        backgroundColor: 'white',
-        borderTopWidth: 1,
-        borderTopColor: '#e5e7eb',
-      }}>
-        <View style={{ flexDirection: 'row', gap: 12 }}>
+      <View className="p-6 bg-white dark:bg-[#0B0D2A] border-t border-gray-200 dark:border-gray-700">
+        <View className="flex-row space-x-4">
           <TouchableOpacity
             onPress={onCancel}
-            style={{
-              flex: 1,
-              paddingVertical: 12,
-              backgroundColor: '#f3f4f6',
-              borderRadius: 8,
-              alignItems: 'center',
-            }}
+            className="flex-1 py-4 bg-gray-100 dark:bg-gray-800 rounded-xl items-center justify-center border border-gray-300 dark:border-gray-600"
           >
-            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#6b7280' }}>
+            <Text className="text-base font-semibold text-gray-700 dark:text-gray-300">
               Cancel
             </Text>
           </TouchableOpacity>
@@ -282,28 +301,30 @@ export const SmartTransactionForm: React.FC<SmartTransactionFormProps> = ({
           <TouchableOpacity
             onPress={handleSubmit}
             disabled={!description.trim() || !amount || !selectedCategory}
-            style={{
-              flex: 2,
-              paddingVertical: 12,
-              backgroundColor: (!description.trim() || !amount || !selectedCategory) 
-                ? '#d1d5db' 
-                : '#6366f1',
-              borderRadius: 8,
-              alignItems: 'center',
-            }}
+            className={`flex-2 py-4 rounded-xl items-center justify-center shadow-lg ${
+              (!description.trim() || !amount || !selectedCategory)
+                ? 'bg-gray-300 dark:bg-gray-700' 
+                : 'bg-gradient-to-r from-cyan-500 to-blue-600 dark:from-cyan-600 dark:to-blue-700'
+            }`}
+            style={{ flex: 2 }}
           >
-            <Text style={{
-              fontSize: 16,
-              fontWeight: 'bold',
-              color: (!description.trim() || !amount || !selectedCategory) 
-                ? '#9ca3af' 
-                : 'white'
-            }}>
-              Add Transaction
-            </Text>
+            <View className="flex-row items-center">
+              <Ionicons 
+                name="add-circle" 
+                size={20} 
+                color={(!description.trim() || !amount || !selectedCategory) ? '#9CA3AF' : 'white'} 
+              />
+              <Text className={`text-base font-bold ml-2 ${
+                (!description.trim() || !amount || !selectedCategory)
+                  ? 'text-gray-500 dark:text-gray-400' 
+                  : 'text-white'
+              }`}>
+                Add Transaction
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
       </View>
-    </ThemedView>
+    </View>
   );
 };

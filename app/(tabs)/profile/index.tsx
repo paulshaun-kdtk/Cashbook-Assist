@@ -1,6 +1,6 @@
 import ProfileScreen from '@/components/cashbook/profile';
 
-export default function Dashboard() {
+export default function ProfileIndex() {
   return (
       <ProfileScreen />
   );

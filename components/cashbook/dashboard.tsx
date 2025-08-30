@@ -1,6 +1,6 @@
 import { formatCurrency } from '@/assets/formatters/currency';
-import { ThemedText } from '@/components/ThemedText';
 import TransferFundsModal from '@/components/forms/transferFunds';
+import { ThemedText } from '@/components/ThemedText';
 import ExportModal from '@/components/ui/exportModal';
 import { PaywallModal } from '@/components/ui/paywallModal';
 import { SubscriptionStatusCard } from '@/components/ui/subscriptionStatusCard';
@@ -24,6 +24,7 @@ import { Modal, ScrollView, Text, TouchableOpacity, useColorScheme, View } from 
 import { useDispatch, useSelector } from 'react-redux';
 import { AIReports } from '../ai/AIReports';
 import NotificationDropdown from '../ui/notificationDropdown';
+import { SwipeActionTutorial, useSwipeActionTutorial } from '../ui/SwipeActionTutorial';
 
 export default function HomeScreen() {
   const theme = useColorScheme();
@@ -60,6 +61,11 @@ export default function HomeScreen() {
   const [showCashbookSelector, setShowCashbookSelector] = React.useState(false);
   const [showAIReportsModal, setShowAIReportsModal] = React.useState(false);
   const [showPaywallModal, setShowPaywallModal] = React.useState(false);
+  
+  // Swipe action tutorial for first-time users
+  const { shouldShowTutorial, markTutorialComplete } = useSwipeActionTutorial();
+  const [showSwipeTutorial, setShowSwipeTutorial] = React.useState(false);
+  
   const [filters, setFilters] = React.useState({
     startDate: "",
     endDate: "",
@@ -78,6 +84,17 @@ export default function HomeScreen() {
         dispatch(fetchCategoriesThunk(username));
       }
     }, [dispatch, username]);
+
+    // Show swipe tutorial for first-time users who have companies and transactions
+    React.useEffect(() => {
+      if (shouldShowTutorial && companies.length > 0 && (income.length > 0 || expenses.length > 0)) {
+        // Small delay to let the UI settle before showing tutorial
+        const timer = setTimeout(() => {
+          setShowSwipeTutorial(true);
+        }, 2000);
+        return () => clearTimeout(timer);
+      }
+    }, [shouldShowTutorial, companies.length, income.length, expenses.length]);
 
     const totalBalance = React.useMemo(() => {
       return Object.values(balances).reduce((sum, val) => sum + val, 0);
@@ -536,6 +553,16 @@ export default function HomeScreen() {
             dispatch(fetchCategoriesThunk(username));
           }
         }}
+      />
+
+      {/* Swipe Action Tutorial */}
+      <SwipeActionTutorial
+        visible={showSwipeTutorial}
+        onClose={() => {
+          setShowSwipeTutorial(false);
+          markTutorialComplete();
+        }}
+        targetComponent="transactions"
       />
     </View>
   );

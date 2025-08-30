@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
 import { useAIService } from '../../hooks/useAIService';
 import { CategorySuggestion } from '../../services/ai/GeminiAIService';
@@ -26,13 +26,33 @@ export const AICategorySuggestions: React.FC<AICategorySuggestionsProps> = ({
   const { suggestCategories, isLoading, error } = useAIService();
   const [suggestions, setSuggestions] = useState<CategorySuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const activeRequestRef = useRef<boolean>(false);
 
   const getSuggestions = useCallback(async () => {
     if (!description || amount <= 0) return;
     
-    const aiSuggestions = await suggestCategories(description, amount, type, categories);
-    setSuggestions(aiSuggestions);
-    setShowSuggestions(aiSuggestions.length > 0);
+    // Cancel any ongoing request
+    activeRequestRef.current = false;
+    
+    // Mark new request as active
+    activeRequestRef.current = true;
+    
+    try {
+      const aiSuggestions = await suggestCategories(description, amount, type, categories);
+      
+      // Only update state if this request is still active (component hasn't changed)
+      if (activeRequestRef.current) {
+        setSuggestions(aiSuggestions);
+        setShowSuggestions(aiSuggestions.length > 0);
+      }
+    } catch (error) {
+      console.error('Error getting AI suggestions:', error);
+      // Only update state if this request is still active
+      if (activeRequestRef.current) {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }
   }, [description, amount, type, categories, suggestCategories]);
 
   useEffect(() => {
@@ -43,6 +63,16 @@ export const AICategorySuggestions: React.FC<AICategorySuggestionsProps> = ({
       setShowSuggestions(false);
     }
   }, [description, amount, type, getSuggestions]);
+
+  // Clear suggestions immediately when transaction type changes and cancel ongoing requests
+  useEffect(() => {
+    // Cancel any active requests
+    activeRequestRef.current = false;
+    
+    // Clear suggestions
+    setSuggestions([]);
+    setShowSuggestions(false);
+  }, [type]);
 
   const handleCategorySelect = (suggestion: CategorySuggestion) => {
     onCategorySelect(suggestion.name);

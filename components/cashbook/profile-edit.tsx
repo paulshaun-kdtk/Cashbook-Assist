@@ -1,4 +1,5 @@
 import { useStoredUsername } from '@/hooks/useStoredUsername';
+import { RootState } from '@/redux/store';
 import { logoutThunk } from '@/redux/thunks/auth/authThunk';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
@@ -7,6 +8,7 @@ import React, { useState } from 'react';
 import { LayoutAnimation, Platform, ScrollView, Text, TextInput, TouchableOpacity, UIManager, useColorScheme, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { ThemedText } from '../ThemedText';
+import BackButton from '../ui/BackButton';
 
 
 // Enable LayoutAnimation for Android
@@ -51,6 +53,7 @@ export default function EditProfilePage() {
 
   return (
     <View className="flex-1 bg-white dark:bg-[#0B0D2A] pt-12">
+      <BackButton />
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Profile Picture and Name Section */}
         <View className="items-center mb-8">
@@ -99,7 +102,7 @@ export default function EditProfilePage() {
             className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-200 dark:bg-[#343A4F] text-black dark:text-white mb-4"
             placeholder="Enter your username"
             placeholderTextColor={theme === 'dark' ? '#9CA3AF' : '#6B7280'}
-            value={username}
+            value={username || ''}
             editable={false}
             autoCapitalize="none"
           />

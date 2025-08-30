@@ -7,15 +7,16 @@ import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useState } from 'react';
 import {
-  ActivityIndicator,
-  Platform,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Platform,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { ThemedText } from '../ThemedText';
+import BackButton from '../ui/BackButton';
 
 export default function SubscriptionSignupScreen() {
   const theme = useColorScheme();
@@ -271,6 +272,7 @@ export default function SubscriptionSignupScreen() {
 
   return (
     <View className="flex-1 bg-gray-50 dark:bg-gray-900">
+      <BackButton className="absolute top-14 left-6 z-10 p-2" />
       <ScrollView className="flex-1 px-6 pt-16" contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Header */}
         <View className="items-center mb-8">

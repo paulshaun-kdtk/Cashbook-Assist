@@ -3,7 +3,7 @@ import { Redirect, Stack } from 'expo-router';
 import React from 'react';
 import Toast from 'react-native-toast-message';
 
-export default function TabLayout() {
+export default function CompaniesLayout() {
   const {user} = useAuthUser();
 
   if (!user) {
@@ -17,6 +17,20 @@ export default function TabLayout() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen 
+        name="cashbooks/[id]" 
+        options={{ 
+          headerShown: false,
+          presentation: 'card'
+        }} 
+      />
+      <Stack.Screen 
+        name="transactions/[id]" 
+        options={{ 
+          headerShown: false,
+          presentation: 'card'
+        }} 
+      />
     </Stack>
   );
 }
