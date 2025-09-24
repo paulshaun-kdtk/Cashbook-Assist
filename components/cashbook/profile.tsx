@@ -1,13 +1,22 @@
+import { useOfflineSync } from '@/hooks/useOfflineSync';
+import { useStoredUsername } from '@/hooks/useStoredUsername';
 import { useToast } from '@/hooks/useToast';
 import { RootState } from '@/redux/store';
+import { fetchCashbooksThunk } from '@/redux/thunks/cashbooks/fetch';
+import { fetchCategoriesThunk } from '@/redux/thunks/categories/fetch';
+import { fetchCompaniesThunk } from '@/redux/thunks/companies/fetch';
+import { fetchExpensesThunk } from '@/redux/thunks/expenses/fetch';
+import { fetchIncomeThunk } from '@/redux/thunks/income/fetch';
 import { fullSyncHybridWithSession } from '@/utils/debugSubscriptionFixed';
 import { FontAwesome, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useState } from 'react';
 import { ActivityIndicator, ScrollView, Share, TouchableOpacity, useColorScheme, View } from 'react-native';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { ThemedText } from '../ThemedText';
+import { PaywallModal } from '../ui/paywallModal';
+import { SubscriptionStatusCard } from '../ui/subscriptionStatusCard';
 import { SwipeActionTutorial } from '../ui/SwipeActionTutorial';
 
 export default function ProfileScreen() {
@@ -15,9 +24,14 @@ export default function ProfileScreen() {
   const theme = useColorScheme(); // 'light' or 'dark'
   const { user } = useSelector((state: RootState) => state.auth);
   const { showToast } = useToast();
+  const dispatch = useDispatch();
   const [isSyncing, setIsSyncing] = useState(false);
   const [showSwipeTutorial, setShowSwipeTutorial] = useState(false);
-
+  const [showPaywallModal, setShowPaywallModal] = React.useState(false);
+  const {username} = useStoredUsername()
+    // Offline sync hook to check connectivity status
+  const { isOnline } = useOfflineSync();
+  
   const handleManualSync = async () => {
     if (!(user as any)?.email) {
       showToast({ type: 'error', text1: 'No user email found' });
@@ -48,6 +62,16 @@ export default function ProfileScreen() {
     }
   };
 
+    React.useEffect(() => {
+      if (username) {
+        dispatch(fetchCompaniesThunk(username));
+        dispatch(fetchCashbooksThunk(username));
+        dispatch(fetchIncomeThunk(username));
+        dispatch(fetchExpensesThunk(username));
+        dispatch(fetchCategoriesThunk(username));
+      }
+    }, [dispatch, username]);
+  
   return (
     <View className="flex-1 bg-white dark:bg-[#0B0D2A] pt-12">
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
@@ -62,6 +86,14 @@ export default function ProfileScreen() {
             <ThemedText className="text-lg font-bold mt-4">{(user as any)?.name}</ThemedText>
             <ThemedText className="text-sm text-gray-500 dark:text-gray-400">{(user as any)?.email}</ThemedText>
         </View>
+
+        {/* Subscription Status Card - Only show when online */}
+        {isOnline && (
+          <SubscriptionStatusCard 
+            onUpgradePress={() => setShowPaywallModal(true)}
+          />
+        )}
+
 
         {/* Settings Options */}
         <View className="mx-4 rounded-xl overflow-hidden">
@@ -187,6 +219,24 @@ export default function ProfileScreen() {
         onClose={() => setShowSwipeTutorial(false)}
         targetComponent="transactions"
       />
+
+            {/* Paywall Modal */}
+            <PaywallModal
+              visible={showPaywallModal}
+              onClose={() => setShowPaywallModal(false)}
+              onPurchaseSuccess={() => {
+                setShowPaywallModal(false);
+                // Refresh data after subscription purchase
+                if (username) {
+                  dispatch(fetchCompaniesThunk(username));
+                  dispatch(fetchCashbooksThunk(username));
+                  dispatch(fetchIncomeThunk(username));
+                  dispatch(fetchExpensesThunk(username));
+                  dispatch(fetchCategoriesThunk(username));
+                }
+              }}
+            />
+      
     </View>
   );
 }

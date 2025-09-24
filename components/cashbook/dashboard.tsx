@@ -32,9 +32,6 @@ export default function HomeScreen() {
   const {username} = useStoredUsername()
   const dispatch = useDispatch()
   
-  // Offline sync hook to check connectivity status
-  const { isOnline } = useOfflineSync();
-  
   // Subscription validation hook - automatically validates subscriptions
   const { 
     validateNow, 
@@ -60,8 +57,7 @@ export default function HomeScreen() {
   const [showTransferModal, setShowTransferModal] = React.useState(false);
   const [showCashbookSelector, setShowCashbookSelector] = React.useState(false);
   const [showAIReportsModal, setShowAIReportsModal] = React.useState(false);
-  const [showPaywallModal, setShowPaywallModal] = React.useState(false);
-  
+   
   // Swipe action tutorial for first-time users
   const { shouldShowTutorial, markTutorialComplete } = useSwipeActionTutorial();
   const [showSwipeTutorial, setShowSwipeTutorial] = React.useState(false);
@@ -244,13 +240,6 @@ export default function HomeScreen() {
           </TouchableOpacity>
       </View>
         </View>
-
-        {/* Subscription Status Card - Only show when online */}
-        {isOnline && (
-          <SubscriptionStatusCard 
-            onUpgradePress={() => setShowPaywallModal(true)}
-          />
-        )}
 
         {/* Balance */}
         <View className="bg-gray-100 dark:bg-[#1A1E4A] mx-4 mt-6 rounded-xl p-4">
@@ -538,22 +527,6 @@ export default function HomeScreen() {
         </View>
       </Modal>
 
-      {/* Paywall Modal */}
-      <PaywallModal
-        visible={showPaywallModal}
-        onClose={() => setShowPaywallModal(false)}
-        onPurchaseSuccess={() => {
-          setShowPaywallModal(false);
-          // Refresh data after subscription purchase
-          if (username) {
-            dispatch(fetchCompaniesThunk(username));
-            dispatch(fetchCashbooksThunk(username));
-            dispatch(fetchIncomeThunk(username));
-            dispatch(fetchExpensesThunk(username));
-            dispatch(fetchCategoriesThunk(username));
-          }
-        }}
-      />
 
       {/* Swipe Action Tutorial */}
       <SwipeActionTutorial

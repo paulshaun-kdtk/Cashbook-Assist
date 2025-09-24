@@ -29,9 +29,9 @@ export class SubscriptionService {
 
   private getFreeTrialLimits(): SubscriptionLimits {
     return {
-      maxCompanies: 1,
-      maxCashbooks: 1,
-      maxTransactions: 50
+      maxCompanies: 5,
+      maxCashbooks: 5,
+      maxTransactions: 1000
     };
   }
 
